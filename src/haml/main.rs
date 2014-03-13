@@ -27,12 +27,17 @@
 #[allow(missing_doc)];
 #[allow(dead_code)];
 
+#[feature(globs)];
+
 extern crate haml;
+extern crate colorize;
 
 use std::io;
 use std::io::File;
 use std::path::Path;
 use std::os;
+
+use colorize::*;
 
 fn get_reader() -> Result<~Reader, ~str> {
     let a = os::args();
@@ -41,15 +46,18 @@ fn get_reader() -> Result<~Reader, ~str> {
     } else if a.len() == 2 {
         match File::open(&Path::new(a[1].clone())) {
             Ok(f)   => Ok(~f as ~Reader),
-            Err(_)  => Err(format!("{}: no such file or directory.", a[2]))
+            Err(_)  => Err(format!("{} {}, no such file or directory.",
+                                   "error:".b_red(),
+                                   a[1]))
         }
     } else {
-        Err(formt!("{}: invalid arguments number: expected 1 but found 2.", )
+        Err(format!("{} invalid arguments number: expected 1 but found {}.",
+                   "error:".b_red(), a.len()))
     }
 }
 
 fn print_usage() {
-    println!("usage: ./haml [optional: filepath]")
+    println!("{} ./haml [optional: filepath]", "usage:".b_yellow())
 }
 
 fn main() {

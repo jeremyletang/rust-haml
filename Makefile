@@ -24,24 +24,28 @@ HAML_RS = src/haml/main.rs
 LIB_HAML_RS = src/libhaml/lib.rs
 LIB_HAML_TEST_RS = src/libhaml/test.rs
 HAML_OUT_DIR = bin
-LIB_HAML_OUT_DIR = lib
+LIBS_OUT_DIR = lib
 LIB_HAML_TEST_OUT_DIR = test
 DOC_OUT_DIR = doc
+LIB_COLORIZE_RS = deps/colorize/lib.rs
 
+all: lib_deps haml libhaml test docs
 
-all: haml libhaml test docs
-
-haml: libhaml
+haml: lib_deps libhaml
 	mkdir -p $(HAML_OUT_DIR)
-	rustc -L $(LIB_HAML_OUT_DIR) --out-dir=$(HAML_OUT_DIR) $(HAML_RS)
+	rustc -L $(LIBS_OUT_DIR) --out-dir=$(HAML_OUT_DIR) $(HAML_RS)
 
 test: libhaml
 	mkdir -p $(LIB_HAML_TEST_OUT_DIR)
-	rustc -L $(LIB_HAML_OUT_DIR) --test --out-dir=$(LIB_HAML_TEST_OUT_DIR) $(LIB_HAML_TEST_RS)
+	rustc -L $(LIBS_OUT_DIR) --test --out-dir=$(LIB_HAML_TEST_OUT_DIR) $(LIB_HAML_TEST_RS)
 
 libhaml:
-	mkdir -p $(LIB_HAML_OUT_DIR)
-	rustc --out-dir=$(LIB_HAML_OUT_DIR) $(LIB_HAML_RS)
+	mkdir -p $(LIBS_OUT_DIR)
+	rustc --out-dir=$(LIBS_OUT_DIR) $(LIB_HAML_RS)
+
+lib_deps:
+	mkdir -p $(LIBS_OUT_DIR)
+	rustc --out-dir=$(LIBS_OUT_DIR) $(LIB_COLORIZE_RS)
 
 docs:
 	mkdir -p doc
@@ -52,5 +56,5 @@ docs:
 clean:
 	rm -rf $(HAML_OUT_DIR)
 	rm -rf $(DOC_OUT_DIR)
-	rm -rf $(LIB_HAML_OUT_DIR)
+	rm -rf $(LIBS_OUT_DIR)
 	rm -rf $(LIB_HAML_TEST_OUT_DIR)
