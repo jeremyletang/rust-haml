@@ -20,25 +20,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
+use std::io::Reader;
 
-// allow lints temporary
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(unused_imports)];
-#[warn(non_camel_case_types)];
+pub struct InputReader {
+    priv input: ~Reader,
+    priv buffer: ~[u8],
+    priv eof: bool
+}
 
-#[feature(globs)];
+impl InputReader {
+    pub fn new(input: ~Reader) -> InputReader {
+        InputReader {
+            input: input,
+            buffer: ~[],
+            eof: false
+        }
+    }
 
-pub use format::{HtmlFormat, Xhtml, Html4, Html5};
-pub use engine::Engine;
+    pub fn get(&mut self) -> Option<u8> {
+        if self.buffer.len() > 0 {
+            self.buffer.shift()
+        } else if self.eof {
+            None
+        } else {
+            match self.input.read_byte() {
+                Ok(b)   => Some(b),
+                Err(_)  => None
+            }
+        }
+    }
 
-mod format;
-mod engine;
-mod token;
-mod input_reader;
-mod lexer;
+    pub fn unget(&mut self, c: Option<u8>) {
+        match c {
+            Some(_c)    => self.buffer.unshift(_c),
+            None        => self.eof = true
+        }
+    }
+}

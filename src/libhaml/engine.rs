@@ -20,25 +20,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
+use std::io::Reader;
 
-// allow lints temporary
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(unused_imports)];
-#[warn(non_camel_case_types)];
+use format::{HtmlFormat, Xhtml, Html5, Html4};
+use token::*;
+use lexer::Lexer;
+use input_reader::InputReader;
 
-#[feature(globs)];
+pub struct Engine {
+    priv lexer: Lexer,
+    priv html_fmt: HtmlFormat,
+    priv tokens: ~[Token]
+}
 
-pub use format::{HtmlFormat, Xhtml, Html4, Html5};
-pub use engine::Engine;
+impl Engine {
+    pub fn new(input: ~Reader, html_fmt: HtmlFormat) -> Engine {
+        Engine {
+            lexer: Lexer::new(InputReader::new(input)),
+            html_fmt: html_fmt,
+            tokens: ~[]
+        }
+    }
 
-mod format;
-mod engine;
-mod token;
-mod input_reader;
-mod lexer;
+    pub fn execute(&mut self) {
+        self.lexer.execute()
+    }
+}

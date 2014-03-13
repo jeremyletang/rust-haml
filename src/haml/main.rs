@@ -29,6 +29,38 @@
 
 extern crate haml;
 
+use std::io;
+use std::io::File;
+use std::path::Path;
+use std::os;
+
+fn get_reader() -> Result<~Reader, ~str> {
+    let a = os::args();
+    if a.len() == 1 {
+        Ok(~io::stdin() as ~Reader)
+    } else if a.len() == 2 {
+        match File::open(&Path::new(a[1].clone())) {
+            Ok(f)   => Ok(~f as ~Reader),
+            Err(_)  => Err(format!("{}: no such file or directory.", a[2]))
+        }
+    } else {
+        Err(formt!("{}: invalid arguments number: expected 1 but found 2.", )
+    }
+}
+
+fn print_usage() {
+    println!("usage: ./haml [optional: filepath]")
+}
+
 fn main() {
-    println!("Welcome to haml")
+    match get_reader() {
+        Ok(reader)   => {
+            let mut haml_engine = haml::Engine::new(reader, haml::Html5);
+            haml_engine.execute();
+        }
+        Err(s)  => { 
+            println!("{}", s);
+            print_usage();
+        }
+    }   
 }
