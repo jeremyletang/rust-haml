@@ -1,3 +1,3 @@
-[submodule "lib/colorize"]
+[submodule "deps/colorize"]
 	path = deps/colorize
 	url = git://github.com/JeremyLetang/colorize.git
