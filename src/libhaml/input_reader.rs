@@ -25,7 +25,7 @@ use std::vec_ng::Vec;
 
 pub struct InputReader {
     priv input: ~Reader,
-    priv buffer: Vec<u8>,
+    priv buffer: Vec<char>,
     priv eof: bool
 }
 
@@ -38,20 +38,20 @@ impl InputReader {
         }
     }
 
-    pub fn get(&mut self) -> Option<u8> {
+    pub fn get(&mut self) -> Option<char> {
         if self.buffer.len() > 0 {
             self.buffer.shift()
         } else if self.eof {
             None
         } else {
             match self.input.read_byte() {
-                Ok(b)   => Some(b),
+                Ok(b)   => Some(b as char),
                 Err(_)  => None
             }
         }
     }
 
-    pub fn unget(&mut self, c: Option<u8>) {
+    pub fn unget(&mut self, c: Option<char>) {
         match c {
             Some(_c)    => self.buffer.unshift(_c),
             None        => self.eof = true

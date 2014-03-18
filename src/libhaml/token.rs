@@ -22,6 +22,7 @@
 
 #[allow(non_camel_case_types)];
 
+#[deriving(Clone, Show, Eq)]
 pub enum Token {
     LPARENT,
     RPARENT,
@@ -30,14 +31,16 @@ pub enum Token {
     LBRACKET,
     RBRACKET,
     RARROW,
+    ASSIGN,
     ID(~str),
     CLASS(~str),
     ATTRIBUTE(~str),
-    TEXT(~str),
+    STR(~str),
+    PLAIN_TEXT(~str),
     HTML_COMMENT,
     HAML_COMMENT,
-    INDENT(u32),
+    INDENT(char, u32),
     DOCTYPE,
-    INDENT(u32, char),
+    EOL,
     EOF
 }
