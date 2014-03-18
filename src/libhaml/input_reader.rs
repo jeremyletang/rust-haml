@@ -21,10 +21,11 @@
 // SOFTWARE.
 
 use std::io::Reader;
+use std::vec_ng::Vec;
 
 pub struct InputReader {
     priv input: ~Reader,
-    priv buffer: ~[u8],
+    priv buffer: Vec<u8>,
     priv eof: bool
 }
 
@@ -32,7 +33,7 @@ impl InputReader {
     pub fn new(input: ~Reader) -> InputReader {
         InputReader {
             input: input,
-            buffer: ~[],
+            buffer: Vec::new(),
             eof: false
         }
     }

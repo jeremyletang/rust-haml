@@ -26,6 +26,7 @@
 #[crate_type = "bin"];
 #[allow(missing_doc)];
 #[allow(dead_code)];
+#[allow(deprecated_owned_vector)];
 
 #[feature(globs)];
 

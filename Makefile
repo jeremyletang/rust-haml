@@ -29,7 +29,7 @@ LIB_HAML_TEST_OUT_DIR = test
 DOC_OUT_DIR = doc
 LIB_COLORIZE_RS = deps/colorize/lib.rs
 
-all: lib_deps haml libhaml test docs
+all: lib_deps haml libhaml #test docs
 
 haml: lib_deps libhaml
 	mkdir -p $(HAML_OUT_DIR)

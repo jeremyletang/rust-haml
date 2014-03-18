@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 use std::io::Reader;
+use std::vec_ng::Vec;
 
 use format::{HtmlFormat, Xhtml, Html5, Html4};
 use token::*;
@@ -30,7 +31,7 @@ use input_reader::InputReader;
 pub struct Engine {
     priv lexer: Lexer,
     priv html_fmt: HtmlFormat,
-    priv tokens: ~[Token]
+    priv tokens: Vec<Token>
 }
 
 impl Engine {
@@ -38,7 +39,7 @@ impl Engine {
         Engine {
             lexer: Lexer::new(InputReader::new(input)),
             html_fmt: html_fmt,
-            tokens: ~[]
+            tokens: Vec::new()
         }
     }
 

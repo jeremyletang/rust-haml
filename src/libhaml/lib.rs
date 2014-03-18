@@ -34,6 +34,8 @@
 
 #[feature(globs)];
 
+extern crate collections;
+
 pub use format::{HtmlFormat, Xhtml, Html4, Html5};
 pub use engine::Engine;
 
@@ -42,3 +44,4 @@ mod engine;
 mod token;
 mod input_reader;
 mod lexer;
+mod dom_tree;

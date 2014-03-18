@@ -36,5 +36,8 @@ pub enum Token {
     TEXT(~str),
     HTML_COMMENT,
     HAML_COMMENT,
+    INDENT(u32),
+    DOCTYPE,
+    INDENT(u32, char),
     EOF
 }
