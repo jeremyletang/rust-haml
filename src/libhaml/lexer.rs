@@ -78,8 +78,8 @@ impl Lexer {
     }
 
     fn handle_indent(&mut self) {
-       while self.get_all(' ') ||
-             self.get_all('\t') {}
+        while self.get_all(' ') ||
+            self.get_all('\t') {}
     }
 
     fn handle_plain_text(&mut self) {
@@ -105,7 +105,7 @@ impl Lexer {
                         self.handle_plain_text();
                         true
                     }
-                    Some(next_c) => { 
+                    Some(next_c) => {
                         self.input.unget(Some(next_c));
                         self.input.unget(Some('-'));
                         false
@@ -133,7 +133,7 @@ impl Lexer {
 
     fn handle_escape_line(&mut self) {
         match self.input.get() {
-            Some('\\')   => { 
+            Some('\\')   => {
                 self.input.unget(Some('\\'));
                 self.handle_plain_text();
             },

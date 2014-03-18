@@ -34,6 +34,7 @@ pub enum Token {
     ASSIGN,
     ID(~str),
     CLASS(~str),
+    TAG(~str),
     ATTRIBUTE(~str),
     STR(~str),
     PLAIN_TEXT(~str),
@@ -41,6 +42,8 @@ pub enum Token {
     HAML_COMMENT,
     INDENT(char, u32),
     DOCTYPE,
+    IDENTIFIANT,
+    NUMBER,
     EOL,
     EOF
 }

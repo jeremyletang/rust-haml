@@ -24,17 +24,17 @@ pub static XHTML_1_0_Transitional: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \
 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">";
 
-pub static XHTML_1_0_Strict: &'static str = 
+pub static XHTML_1_0_Strict: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \
 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">";
 
-pub static XHTML_1_0_Frameset: &'static str =  
+pub static XHTML_1_0_Frameset: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\" \
 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">";
 
 pub static XHTML_5: &'static str = "<!DOCTYPE html>";
 
-pub static XHTML_1_1: &'static str = 
+pub static XHTML_1_1: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \
 \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">";
 
@@ -58,7 +58,7 @@ pub static HTML_4_01_Strict: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \
 \"http://www.w3.org/TR/html4/strict.dtd\">";
 
-pub static HTML_4_01_Frameset: &'static str = 
+pub static HTML_4_01_Frameset: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\" \
 \"http://www.w3.org/TR/html4/frameset.dtd\">";
 

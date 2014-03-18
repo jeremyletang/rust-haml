@@ -107,7 +107,7 @@ impl DomTree {
     }
 }
 
-fn rec_get_elt<'a>(elt: &'a DomElement, 
+fn rec_get_elt<'a>(elt: &'a DomElement,
                    mut tree_path: Vec<i32>) -> Option<&'a DomElement> {
     match tree_path.shift() {
         Some(idx) => rec_get_elt(elt.get_childs().get(idx as uint), tree_path),
@@ -115,8 +115,8 @@ fn rec_get_elt<'a>(elt: &'a DomElement,
     }
 }
 
-fn rec_insert_elt(elt: &mut DomElement, 
-                  new_elt: DomElement, 
+fn rec_insert_elt(elt: &mut DomElement,
+                  new_elt: DomElement,
                   mut tree_path: Vec<i32>) -> i32 {
     match tree_path.shift() {
         Some(idx) => rec_insert_elt(elt.get_mut_childs().get_mut(idx as uint),
@@ -194,7 +194,9 @@ impl DomElement {
     }
 }
 
-fn rec_show(elt: &DomElement, f: &mut fmt::Formatter, indent: ~str) -> fmt::Result {
+fn rec_show(elt: &DomElement,
+            f: &mut fmt::Formatter,
+            indent: ~str) -> fmt::Result {
     let mut res: fmt::Result = Ok(());
     for e in elt.get_childs().iter() {
         try!(write!(f.buf, "{}", indent));
