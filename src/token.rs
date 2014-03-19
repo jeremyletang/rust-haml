@@ -42,7 +42,9 @@ pub enum Token {
     HAML_COMMENT,
     INDENT(char, u32),
     DOCTYPE,
-    IDENTIFIANT,
+    IDENTIFIER,
+    VAR,
+    DOUBLE_DOT,
     NUMBER,
     EOL,
     EOF

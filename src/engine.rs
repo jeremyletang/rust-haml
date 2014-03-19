@@ -20,6 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#[allow(unused_variable)];
+
+use std::fmt;
 use std::io::Reader;
 use std::vec_ng::Vec;
 
@@ -45,5 +48,13 @@ impl Engine {
 
     pub fn execute(&mut self) {
         self.lexer.execute()
+    }
+
+    pub fn set_val<T: fmt::Show>(&mut self, val: T) -> bool {
+        unimplemented!()
+    }
+
+    pub fn set_vec_val<T: fmt::Show>(&mut self, vec_val: Vec<T>) -> bool {
+        unimplemented!()
     }
 }

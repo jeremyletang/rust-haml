@@ -51,10 +51,11 @@ impl InputReader {
         }
     }
 
-    pub fn unget(&mut self, c: Option<char>) {
-        match c {
-            Some(_c)    => self.buffer.unshift(_c),
-            None        => self.eof = true
-        }
+    pub fn unget(&mut self, c: char) {
+        self.buffer.unshift(c)
+    }
+
+    pub fn unget_eof(&mut self) {
+        self.eof = true
     }
 }

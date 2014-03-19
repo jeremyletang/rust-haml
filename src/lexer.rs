@@ -64,11 +64,11 @@ impl Lexer {
                     if next_c == c {
                         len += 1;
                     } else {
-                        self.input.unget(Some(next_c));
+                        self.input.unget(next_c);
                         break
                     }
                 },
-                None => { self.input.unget(None); break }
+                None => { self.input.unget_eof(); break }
             }
         }
         if len > 0 {
@@ -86,9 +86,9 @@ impl Lexer {
         let mut content = ~"";
         loop {
             match self.input.get() {
-                Some('\n')  => { self.input.unget(Some('\n')); break },
+                Some('\n')  => { self.input.unget('\n'); break },
                 Some(c)     => content.push_char(c),
-                None        => { self.input.unget(None); break }
+                None        => { self.input.unget_eof(); break }
             }
         }
         if content.len() > 0 {
@@ -106,13 +106,13 @@ impl Lexer {
                         true
                     }
                     Some(next_c) => {
-                        self.input.unget(Some(next_c));
-                        self.input.unget(Some('-'));
+                        self.input.unget(next_c);
+                        self.input.unget('-');
                         false
                     },
                     None         => {
-                        self.input.unget(None);
-                        self.input.unget(Some('-'));
+                        self.input.unget_eof();
+                        self.input.unget('-');
                         false
                     }
                 }
@@ -122,23 +122,71 @@ impl Lexer {
                 self.handle_plain_text();
                 true
             }
-            Some(next_c) => { self.input.unget(Some(next_c)); false },
-            None         => { self.input.unget(None); false }
+            Some(next_c) => { self.input.unget(next_c); false },
+            None         => { self.input.unget_eof(); false }
         }
     }
 
-    fn handle_tag(&mut self) {
-
+    fn handle_doctype(&mut self) {
+        
     }
+
+    fn handle_id(&mut self) -> ~str{
+        let mut name = ~"";
+        loop {
+            match self.input.get() {
+                Some(c) => {
+                    if c.is_alphanumeric() || c == '-' || c == '_' {
+                        name.push_char(c);
+                    } else {
+                        self.input.unget(c);
+                        break
+                    }
+                }
+                None    =>  { self.input.unget_eof(); break }
+            }
+        }
+        name
+    }
+
+    fn handle_tag(&mut self) {
+        // check first if there is a '%' tag
+        match self.input.get() {
+            Some('%')     => {
+                let identifier = self.handle_id();
+                self.tokens.push(token::TAG(identifier));
+            },
+            Some(c_other) => self.input.unget(c_other),
+            None          => self.input.unget_eof()
+        };
+        // then check for additionnal '.' class or '#' id
+        loop {
+            match self.input.get() {
+                Some('!') => { self.handle_doctype(); break },
+                Some('#') => {
+                    let identifier = self.handle_id();
+                    self.tokens.push(token::ID(identifier));
+                },
+                Some('.') => {
+                    let identifier = self.handle_id();
+                    self.tokens.push(token::CLASS(identifier));
+                },
+                Some(c_next) => { self.input.unget(c_next); break },
+                None         => { self.input.unget_eof(); break }
+            }
+        }
+    }
+
+    fn handle_attribute(&mut self) {}
 
     fn handle_escape_line(&mut self) {
         match self.input.get() {
             Some('\\')   => {
-                self.input.unget(Some('\\'));
+                self.input.unget('\\');
                 self.handle_plain_text();
             },
-            Some(next_c) => self.input.unget(Some(next_c)),
-            None         => self.input.unget(None)
+            Some(next_c) => self.input.unget(next_c),
+            None         => self.input.unget_eof()
         }
     }
 
@@ -148,8 +196,9 @@ impl Lexer {
         // no comments found -> try to find a tag
         if !self.handle_comments() {
             self.handle_tag();
+            self.handle_attribute();
+            self.handle_plain_text();
         }
-        self.handle_plain_text();
         match self.input.get() {
             Some(_) => { self.tokens.push(token::EOL); Ok },
             None    => { self.tokens.push(token::EOF); End }
