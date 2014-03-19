@@ -20,9 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-HAML_RS = src/haml/main.rs
-LIB_HAML_RS = src/libhaml/lib.rs
-LIB_HAML_TEST_RS = src/libhaml/test.rs
+HAML_RS = src/bin/main.rs
+LIB_HAML_RS = src/lib.rs
+LIB_HAML_TEST_RS = src/test.rs
 HAML_OUT_DIR = bin
 LIBS_OUT_DIR = lib
 LIB_HAML_TEST_OUT_DIR = test
