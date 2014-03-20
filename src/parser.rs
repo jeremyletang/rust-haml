@@ -20,29 +20,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
+use std::vec_ng::Vec;
 
-// allow lints temporary
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(unused_imports)];
-#[warn(non_camel_case_types)];
+use dom_tree::{DomTree, DomElement};
+use format::{HtmlFormat, Xhtml, Html5, Html4};
+use token::Token;
+use token;
 
-#[feature(globs)];
+pub struct Parser {
+    priv html_fmt: HtmlFormat,
+    priv tokens: Vec<Token>,
+    priv dom_tree: DomTree
+}
 
-extern crate collections;
+impl Parser {
+    pub fn new(html_fmt: HtmlFormat) -> Parser {
+        Parser {
+            html_fmt: html_fmt,
+            tokens: Vec::new(),
+            dom_tree: DomTree::new()
+        }
+    }
 
-pub use format::{HtmlFormat, Xhtml, Html4, Html5};
-pub use engine::Engine;
-
-mod format;
-mod engine;
-mod token;
-mod input_reader;
-mod lexer;
-mod dom_tree;
-mod parser;
+    pub fn execute(&mut self, tokens: Vec<Token>) -> DomTree {
+        self.tokens = tokens;
+        self.dom_tree.insert(DomElement::new(~"hello")).unwrap();
+        self.dom_tree.insert_inline(DomElement::new_inline(~"hello1", ~"blublublublub"));
+        self.dom_tree.clone()
+    }
+}

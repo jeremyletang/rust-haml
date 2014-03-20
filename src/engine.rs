@@ -25,29 +25,34 @@
 use std::fmt;
 use std::io::Reader;
 use std::vec_ng::Vec;
+use std::io::IoResult;
 
 use format::{HtmlFormat, Xhtml, Html5, Html4};
 use token::*;
 use lexer::Lexer;
+use parser::Parser;
+use dom_tree::DomTree;
 use input_reader::InputReader;
 
 pub struct Engine {
     priv lexer: Lexer,
-    priv html_fmt: HtmlFormat,
-    priv tokens: Vec<Token>
+    priv parser: Parser,
+    priv dom_tree: DomTree
 }
 
 impl Engine {
     pub fn new(input: ~Reader, html_fmt: HtmlFormat) -> Engine {
         Engine {
             lexer: Lexer::new(InputReader::new(input)),
-            html_fmt: html_fmt,
-            tokens: Vec::new()
+            parser: Parser::new(html_fmt),
+            dom_tree: DomTree::new()
         }
     }
 
     pub fn execute(&mut self) {
-        self.lexer.execute()
+        let tokens = self.lexer.execute();
+        println!("tokens:\n{}", tokens);
+        self.dom_tree = self.parser.execute(tokens);
     }
 
     pub fn set_val<T: fmt::Show>(&mut self, val: T) -> bool {
@@ -57,4 +62,11 @@ impl Engine {
     pub fn set_vec_val<T: fmt::Show>(&mut self, vec_val: Vec<T>) -> bool {
         unimplemented!()
     }
+
+    pub fn generate(&mut self, output: &mut Writer) -> IoResult<()> {
+        match output.write_str(format!("{}", self.dom_tree)) {
+            Ok(_)   => Ok(()),
+            Err(e)  => Err(e)
+        }
+    } 
 }

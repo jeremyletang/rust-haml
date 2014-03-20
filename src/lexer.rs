@@ -45,7 +45,7 @@ impl Lexer {
         }
     }
 
-    pub fn execute(&mut self) {
+    pub fn execute(&mut self) -> Vec<Token> {
         loop {
             match self.lex_line() {
                 Ok          => {/* continue */},
@@ -53,7 +53,7 @@ impl Lexer {
                 End         => break
            }
         }
-        println!("tokens:\n{}", self.tokens);
+        self.tokens.clone()
     }
 
     fn get_all(&mut self, c: char) -> bool {

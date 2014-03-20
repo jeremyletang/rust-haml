@@ -66,6 +66,11 @@ fn main() {
         Ok(reader)   => {
             let mut haml_engine = haml::Engine::new(reader, haml::Html5);
             haml_engine.execute();
+            let mut writer = io::stdout();
+            match haml_engine.generate(&mut writer as &mut Writer) {
+                Ok(()) => { /* nothing to do */ },
+                Err(e) => fail!("error on writing output: {}", e)
+            }
         }
         Err(s)  => { 
             println!("{}", s);
