@@ -129,3 +129,75 @@ fn get_html5_specific(_: ~str) -> ~str {
     XHTML_5.to_owned()
 }
 
+#[cfg(test)]
+mod test {
+    use format::{get_specific_format, HtmlFormat, Xhtml, Html4, Html5, XHTML_5,
+                 XHTML_1_0_Transitional, XHTML_1_0_Frameset,
+                 HTML_4_01_Transitional, HTML_4_01_Frameset};
+
+    #[test]
+    fn html5_format_with_no_specific_give_html5() {
+        assert_eq!(XHTML_5.to_owned(), get_specific_format(~"", Html5))
+    }
+
+    #[test]
+    fn html5_format_with_unknown_give_html5() {
+        assert_eq!(XHTML_5.to_owned(), get_specific_format(~"Strict", Html5))
+    }
+
+    #[test]
+    fn xhtml_format_with_no_specific_give_transitional() {
+        assert_eq!(XHTML_1_0_Transitional.to_owned(),
+                   get_specific_format(~"", Xhtml))
+    }
+
+    #[test]
+    fn xhtml_format_with_unknown_specific_give_transitional() {
+        assert_eq!(XHTML_1_0_Transitional.to_owned(),
+                   get_specific_format(~"Somethingelse", Xhtml))
+    }
+
+    #[test]
+    fn xhtml_format_with_a_specific_give_the_good_one() {
+        assert_eq!(XHTML_1_0_Frameset.to_owned(),
+                   get_specific_format(~"Frameset", Xhtml))
+    }
+
+    #[test]
+    fn html4_format_with_no_specific_give_transitional() {
+        assert_eq!(HTML_4_01_Transitional.to_owned(),
+                   get_specific_format(~"", Html4))
+    }
+
+    #[test]
+    fn xhtml4_format_with_unknown_specific_give_transitional() {
+        assert_eq!(HTML_4_01_Transitional.to_owned(),
+                   get_specific_format(~"Somethingelse", Html4))
+    }
+
+    #[test]
+    fn xhtml4_format_with_a_specific_give_the_good_one() {
+        assert_eq!(HTML_4_01_Frameset.to_owned(),
+                   get_specific_format(~"Frameset", Html4))
+    }
+
+    #[test]
+    fn xml_specific_override_doctype_type() {
+        assert_eq!(~"<?xml version='1.0' encoding='utf-8' ?>",
+                   get_specific_format(~"XML", Html4))
+    }
+
+    #[test]
+    fn xml_specific_override_doctype_type_and_specify_encoding() {
+        assert_eq!(~"<?xml version='1.0' encoding='iso-8859-1' ?>",
+                   get_specific_format(~"XML iso-8859-1", Html4))
+    }
+
+    #[test]
+    fn xml_specific_with_too_much_params_give_default_for_format_type() {
+        assert_eq!(HTML_4_01_Transitional.to_owned(),
+                   get_specific_format(~"XML iso-8859-1 some other params",
+                                       Html4))
+    }
+}
+

@@ -245,7 +245,7 @@ impl Lexer {
         fn get_blankline_begin(v: &Vec<Token>, i: uint) -> uint {
             match v.get(i) {
                 &token::INDENT(_, _) => {
-                    if i == 0 { i } 
+                    if i == 0 { i }
                     else { get_blankline_begin(v, i - 1) }
                 },
                 _                   => i + 1
@@ -278,17 +278,17 @@ impl Lexer {
             self.handle_plain_text();
         }
         match self.input.get() {
-            Some(_) => { 
-                self.tokens.push(token::EOL); 
+            Some(_) => {
+                self.tokens.push(token::EOL);
                 self.check_blankline();
-                Ok 
+                Ok
             },
             None    => { self.tokens.push(token::EOF); End }
         }
     }
 }
 
-#[cfg(test)] 
+#[cfg(test)]
 mod tests {
     use lexer::Lexer;
     use input_reader::InputReader;
@@ -320,7 +320,7 @@ mod tests {
     }
 
     fn prepare_test_lexer(haml_str: ~str) -> Lexer {
-        let input_reader = InputReader::new(~mock::Input { 
+        let input_reader = InputReader::new(~mock::Input {
             input: haml_str
         } as ~Reader);
         Lexer::new(input_reader)
@@ -332,7 +332,7 @@ mod tests {
         let expected = vec!(token::PLAIN_TEXT(~"this is a plain text string"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -341,7 +341,19 @@ mod tests {
         let haml_str = ~"";
         let expected = vec!(token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_white_space_on_begin_give_indent() {
+        let haml_str = ~"  %tag\n";
+        let expected = vec!(token::INDENT(' ', 2),
+                            token::TAG(~"tag"),
+                            token::EOL,
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -355,7 +367,7 @@ mod tests {
                             token::PLAIN_TEXT(~"text"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -369,7 +381,7 @@ mod tests {
                             token::PLAIN_TEXT(~"text"),
                             token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -380,7 +392,7 @@ mod tests {
                             token::PLAIN_TEXT(~"plain text"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -390,7 +402,7 @@ mod tests {
         let expected = vec!(token::PLAIN_TEXT(~"%t.i#4 + plain text string"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -401,7 +413,7 @@ mod tests {
                             token::PLAIN_TEXT(~"%t.i#4 + plain text string"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -414,7 +426,7 @@ mod tests {
                             token::CLASS(~"class"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -423,7 +435,7 @@ mod tests {
         let haml_str = ~"    \t     \n     \t    \n";
         let expected = vec!(token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -432,7 +444,7 @@ mod tests {
         let haml_str = ~"    \t     \n%t\n     \t    \n";
         let expected = vec!(token::TAG(~"t"), token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -442,7 +454,7 @@ mod tests {
         let expected = vec!(token::TAG(~"t"), token::EOL,
                             token::TAG(~"i"), token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -452,7 +464,7 @@ mod tests {
         let expected = vec!(token::INDENT(' ', 2), token::TAG(~"t"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -462,7 +474,7 @@ mod tests {
         let expected = vec!(token::TAG(~"t"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -472,7 +484,7 @@ mod tests {
         let expected = vec!(token::DOCTYPE,
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -483,7 +495,7 @@ mod tests {
                             token::PLAIN_TEXT(~"Strict"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -493,7 +505,7 @@ mod tests {
         let expected = vec!(token::PLAIN_TEXT(~"!!"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 
@@ -503,7 +515,7 @@ mod tests {
         let expected = vec!(token::PLAIN_TEXT(~"!"),
                             token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
-        
+
         assert_eq!(expected, lexer.execute())
     }
 }
