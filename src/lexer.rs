@@ -118,7 +118,7 @@ impl Lexer {
             }
         }
 
-        
+
         let mut content = ~"";
         loop {
             match self.input.get() {
@@ -202,14 +202,11 @@ impl Lexer {
 
     fn handle_tag(&mut self) {
         // check first if there is a '%' tag
-        match self.input.get() {
-            Some('%')     => {
-                let identifier = self.handle_identifier();
-                self.tokens.push(token::TAG(identifier));
-            },
-            Some(c_other) => self.input.unget(c_other),
-            None          => self.input.unget_eof()
-        };
+        if self.next_is('%') {
+            let identifier = self.handle_identifier();
+            self.tokens.push(token::TAG(identifier));
+        }
+
         // then check for additionnal '.' class or '#' id
         loop {
             match self.input.get() {
@@ -233,21 +230,14 @@ impl Lexer {
     }
 
     fn handle_escape_line(&mut self) {
-        match self.input.get() {
-            Some('\\')   => {
-                self.input.unget('\\');
-                self.handle_plain_text();
-            },
-            Some(next_c) => self.input.unget(next_c),
-            None         => self.input.unget_eof()
+        if self.next_is('\\') {
+            self.handle_plain_text();
         }
     }
 
     fn handle_assign(&mut self) {
-        match self.input.get() {
-            Some('=')    => self.tokens.push(token::ASSIGN),
-            Some(next_c) => self.input.unget(next_c),
-            None         => self.input.unget_eof()
+        if self.next_is('=') {
+            self.tokens.push(token::ASSIGN)
         }
     }
 
