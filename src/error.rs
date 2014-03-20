@@ -20,30 +20,3 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
-
-// allow lints temporary
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(unused_imports)];
-#[warn(non_camel_case_types)];
-
-#[feature(globs)];
-
-extern crate collections;
-
-pub use format::{HtmlFormat, Xhtml, Html4, Html5};
-pub use engine::Engine;
-
-mod format;
-mod engine;
-mod token;
-mod input_reader;
-mod lexer;
-mod dom_tree;
-mod parser;
-mod error;

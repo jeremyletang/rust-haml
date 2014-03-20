@@ -56,6 +56,23 @@ impl Lexer {
         self.tokens.clone()
     }
 
+    fn next_is(&mut self, c: char) -> bool {
+        match self.input.get() {
+            Some(next_c) => {
+                if next_c == c {
+                    true
+                } else {
+                    self.input.unget(next_c);
+                    false
+                }
+            },
+            None         => {
+                self.input.unget_eof();
+                false
+            }
+        }
+    }
+
     fn get_all(&mut self, c: char) -> bool {
         let mut len = 0;
         loop {
@@ -80,8 +97,6 @@ impl Lexer {
     fn handle_indent(&mut self) {
         while self.get_all(' ') ||
             self.get_all('\t') {}
-
-        // if is_blankline() { return Ok;}
     }
 
     fn handle_plain_text(&mut self) {
@@ -94,8 +109,10 @@ impl Lexer {
             }
         }
         // remove whitespace before the text
+        content = clean_plain_text_before(content.shift_char(), content);
 
         // remove whitespace after the text
+        content = clean_plain_text_after(content.pop_char(), content);
 
         if content.len() > 0 {
             self.tokens.push(token::PLAIN_TEXT(content));
@@ -134,10 +151,19 @@ impl Lexer {
     }
 
     fn handle_doctype(&mut self) {
-        
+        if self.next_is('!') {
+            if self.next_is('!') {
+                self.tokens.push(token::DOCTYPE)
+            } else {
+                self.input.unget('!');
+                self.input.unget('!');
+            }
+        } else {
+            self.input.unget('!')
+        }
     }
 
-    fn handle_id(&mut self) -> ~str{
+    fn handle_identifier(&mut self) -> ~str{
         let mut name = ~"";
         loop {
             match self.input.get() {
@@ -159,7 +185,7 @@ impl Lexer {
         // check first if there is a '%' tag
         match self.input.get() {
             Some('%')     => {
-                let identifier = self.handle_id();
+                let identifier = self.handle_identifier();
                 self.tokens.push(token::TAG(identifier));
             },
             Some(c_other) => self.input.unget(c_other),
@@ -170,11 +196,11 @@ impl Lexer {
             match self.input.get() {
                 Some('!') => { self.handle_doctype(); break },
                 Some('#') => {
-                    let identifier = self.handle_id();
+                    let identifier = self.handle_identifier();
                     self.tokens.push(token::ID(identifier));
                 },
                 Some('.') => {
-                    let identifier = self.handle_id();
+                    let identifier = self.handle_identifier();
                     self.tokens.push(token::CLASS(identifier));
                 },
                 Some(c_next) => { self.input.unget(c_next); break },
@@ -183,7 +209,9 @@ impl Lexer {
         }
     }
 
-    fn handle_attribute(&mut self) {}
+    fn handle_attribute(&mut self) {
+        unimplemented!()
+    }
 
     fn handle_escape_line(&mut self) {
         match self.input.get() {
@@ -196,18 +224,80 @@ impl Lexer {
         }
     }
 
+    fn handle_assign(&mut self) {
+        match self.input.get() {
+            Some('=')    => self.tokens.push(token::ASSIGN),
+            Some(next_c) => self.input.unget(next_c),
+            None         => self.input.unget_eof()
+        }
+    }
+
+    fn check_blankline(&mut self) {
+        let i = self.tokens.len() - 1;
+        if i == 0 { // only one token -> '\n'
+            self.tokens.pop();
+        } else {
+            match self.tokens.get(i - 1) {
+                &token::INDENT(_, _) => {
+                    let pos = get_blankline_begin(&self.tokens, i - 1);
+                    self.tokens.truncate(pos);
+                },
+                _                   => { /* do nothing  */ }
+            }
+        }
+
+    }
+
     fn lex_line(&mut self) -> LexResult {
         self.handle_indent();
         self.handle_escape_line();
         // no comments found -> try to find a tag
         if !self.handle_comments() {
             self.handle_tag();
-            self.handle_attribute();
+            // self.handle_attribute();
+            self.handle_assign();
             self.handle_plain_text();
         }
         match self.input.get() {
-            Some(_) => { self.tokens.push(token::EOL); Ok },
+            Some(_) => { 
+                self.tokens.push(token::EOL); 
+                self.check_blankline();
+                Ok 
+            },
             None    => { self.tokens.push(token::EOF); End }
         }
     }
 }
+
+fn get_blankline_begin(v: &Vec<Token>, i: uint) -> uint {
+    match v.get(i) {
+        &token::INDENT(_, _) => {
+            if i == 0 {
+                i
+            } else {
+                get_blankline_begin(v, i - 1)
+            }
+        },
+        _                   => i + 1
+    }
+
+}
+
+fn clean_plain_text_after(c: Option<char>, mut content: ~str) -> ~str {
+    match c {
+        Some(' ') | Some('\t') => clean_plain_text_after(content.pop_char(),
+                                                       content),
+        Some(c)                => { content.push_char(c); content }
+        _                      => content
+    }
+}
+
+fn clean_plain_text_before(c: Option<char>, mut content: ~str) -> ~str {
+    match c {
+        Some(' ') | Some('\t') => clean_plain_text_before(content.shift_char(),
+                                                       content),
+        Some(c)                => { content.unshift_char(c); content }
+        _                      => content
+    }
+}
+

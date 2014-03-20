@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#[allow(deprecated_owned_vector)];
+
 pub static XHTML_1_0_Transitional: &'static str =
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \
 \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">";
@@ -67,3 +69,63 @@ pub enum HtmlFormat {
     Html4,
     Html5
 }
+
+pub fn get_specific_format(spec_format: ~str, html_fmt: HtmlFormat) -> ~str {
+    match xml_prolog(spec_format.clone()) {
+        Some(s) => s,
+        None    => {
+            match html_fmt {
+                Xhtml => get_xhtml_specific(spec_format),
+                Html4 => get_html4_specific(spec_format),
+                Html5 => get_html5_specific(spec_format)
+            }
+        }
+    }
+}
+
+fn xml_prolog(spec_format: ~str) -> Option<~str> {
+    let split: ~[&str] = spec_format.split(' ').collect();
+    if split.len() > 0 {
+        match split[0] {
+            "XML"  => {
+                if split.len() == 1 {
+                    Some(~"<?xml version='1.0' encoding='utf-8' ?>")
+                } else if split.len() == 2 {
+                    Some(format!("<?xml version='1.0' encoding='{}' ?>",
+                                 split[1]))
+                } else {
+                    None
+                }
+            },
+            _      => None
+        }
+    } else {
+        None
+    }
+}
+
+fn get_xhtml_specific(spec_format: ~str) -> ~str {
+    match spec_format.as_slice() {
+        "Strict"   => XHTML_1_0_Strict.to_owned(),
+        "Frameset" => XHTML_1_0_Frameset.to_owned(),
+        "5"        => XHTML_5.to_owned(),
+        "1.1"      => XHTML_1_1.to_owned(),
+        "Basic"    => XHTML_Basic_1_1.to_owned(),
+        "Mobile"   => XHTML_Mobile_1_2.to_owned(),
+        "RDFa"     => XHTML_PLUS_RDFA_1_0.to_owned(),
+        _          => XHTML_1_0_Transitional.to_owned()
+    }
+}
+
+fn get_html4_specific(spec_format: ~str) -> ~str {
+    match spec_format.as_slice() {
+        "Strict"   => HTML_4_01_Strict.to_owned(),
+        "Frameset" => HTML_4_01_Frameset.to_owned(),
+        _          => HTML_4_01_Transitional.to_owned()
+    }
+}
+
+fn get_html5_specific(_: ~str) -> ~str {
+    XHTML_5.to_owned()
+}
+
