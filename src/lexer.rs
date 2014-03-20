@@ -287,3 +287,223 @@ impl Lexer {
         }
     }
 }
+
+#[cfg(test)] 
+mod tests {
+    use lexer::Lexer;
+    use input_reader::InputReader;
+    use token;
+
+    mod mock {
+        use std::io::{Reader, IoError, EndOfFile, IoResult};
+
+        pub struct Input {
+            input: ~str
+        }
+
+        impl Reader for Input {
+            fn read(&mut self, _: &mut [u8]) -> IoResult<uint> {
+                Ok(0)
+            }
+
+            fn read_byte(&mut self) -> IoResult<u8> {
+                match self.input.shift_char() {
+                    Some(c) => Ok(c as u8),
+                    None    => Err(IoError {
+                        kind: EndOfFile,
+                        desc: "",
+                        detail: None,
+                    })
+                }
+            }
+        }
+    }
+
+    fn prepare_test_lexer(haml_str: ~str) -> Lexer {
+        let input_reader = InputReader::new(~mock::Input { 
+            input: haml_str
+        } as ~Reader);
+        Lexer::new(input_reader)
+    }
+
+    #[test]
+    fn lex_plain_text() {
+        let haml_str = ~"this is a plain text string\n";
+        let expected = vec!(token::PLAIN_TEXT(~"this is a plain text string"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_empty_input() {
+        let haml_str = ~"";
+        let expected = vec!(token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_a_line_ending_with_return() {
+        let haml_str = ~"  %tag#id.class text\n";
+        let expected = vec!(token::INDENT(' ', 2),
+                            token::TAG(~"tag"),
+                            token::ID(~"id"),
+                            token::CLASS(~"class"),
+                            token::PLAIN_TEXT(~"text"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_a_line_ending_with_end_of_file() {
+        let haml_str = ~"  %tag#id.class text";
+        let expected = vec!(token::INDENT(' ', 2),
+                            token::TAG(~"tag"),
+                            token::ID(~"id"),
+                            token::CLASS(~"class"),
+                            token::PLAIN_TEXT(~"text"),
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_plain_text_and_remove_extra_white_space() {
+        let haml_str = ~"%t \t   plain text   \t   \t   \t\n";
+        let expected = vec!(token::TAG(~"t"),
+                            token::PLAIN_TEXT(~"plain text"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_escape_string_give_plain_text() {
+        let haml_str = ~"\\%t.i#4 + plain text string\n";
+        let expected = vec!(token::PLAIN_TEXT(~"%t.i#4 + plain text string"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_indent_with_escape_string_give_indent_and_plain_text() {
+        let haml_str = ~"  \\%t.i#4 + plain text string\n";
+        let expected = vec!(token::INDENT(' ', 2),
+                            token::PLAIN_TEXT(~"%t.i#4 + plain text string"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_chained_tag_id_and_class() {
+        let haml_str = ~"%tag.class#id.class\n";
+        let expected = vec!(token::TAG(~"tag"),
+                            token::CLASS(~"class"),
+                            token::ID(~"id"),
+                            token::CLASS(~"class"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn remove_blankline_no_content() {
+        let haml_str = ~"    \t     \n     \t    \n";
+        let expected = vec!(token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn remove_blankline_with_content() {
+        let haml_str = ~"    \t     \n%t\n     \t    \n";
+        let expected = vec!(token::TAG(~"t"), token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn remove_blankline_inside_content() {
+        let haml_str = ~"    \t     \n%t\n     \t    \n%i\n";
+        let expected = vec!(token::TAG(~"t"), token::EOL,
+                            token::TAG(~"i"), token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn remove_blankline_and_keep_indent() {
+        let haml_str = ~"    \t     \n  %t\n     \t    \n";
+        let expected = vec!(token::INDENT(' ', 2), token::TAG(~"t"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn blank_space_after_tag_is_not_plain_text() {
+        let haml_str = ~"%t          \n";
+        let expected = vec!(token::TAG(~"t"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn three_exclamation_and_more_is_doctype() {
+        let haml_str = ~"!!!\n";
+        let expected = vec!(token::DOCTYPE,
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn doctype_can_have_plain_text_specifier() {
+        let haml_str = ~"!!! Strict\n";
+        let expected = vec!(token::DOCTYPE,
+                            token::PLAIN_TEXT(~"Strict"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn one_exclamation_is_not_doctype() {
+        let haml_str = ~"!!\n";
+        let expected = vec!(token::PLAIN_TEXT(~"!!"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn two_exclamation_is_not_doctype() {
+        let haml_str = ~"!\n";
+        let expected = vec!(token::PLAIN_TEXT(~"!"),
+                            token::EOL, token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+        
+        assert_eq!(expected, lexer.execute())
+    }
+}

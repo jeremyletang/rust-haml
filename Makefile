@@ -37,7 +37,7 @@ haml: lib_deps libhaml
 
 test: libhaml
 	mkdir -p $(LIB_HAML_TEST_OUT_DIR)
-	rustc -L $(LIBS_OUT_DIR) --test --out-dir=$(LIB_HAML_TEST_OUT_DIR) $(LIB_HAML_TEST_RS)
+	rustc -L $(LIBS_OUT_DIR) --test -o $(LIB_HAML_TEST_OUT_DIR)/libhaml_tests $(LIB_HAML_RS)
 
 libhaml:
 	mkdir -p $(LIBS_OUT_DIR)
