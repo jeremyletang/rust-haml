@@ -29,13 +29,13 @@ LIB_HAML_TEST_OUT_DIR = test
 DOC_OUT_DIR = doc
 LIB_COLORIZE_RS = deps/colorize/lib.rs
 
-all: lib_deps haml libhaml #test docs
+all: lib_deps haml libhaml
 
 haml: lib_deps libhaml
 	mkdir -p $(HAML_OUT_DIR)
 	rustc -L $(LIBS_OUT_DIR) --out-dir=$(HAML_OUT_DIR) $(HAML_RS)
 
-test: libhaml
+tests: libhaml
 	mkdir -p $(LIB_HAML_TEST_OUT_DIR)
 	rustc -L $(LIBS_OUT_DIR) --test -o $(LIB_HAML_TEST_OUT_DIR)/libhaml_tests $(LIB_HAML_RS)
 
