@@ -100,6 +100,25 @@ impl Lexer {
     }
 
     fn handle_plain_text(&mut self) {
+        fn clean_plain_text_after(c: Option<char>, mut content: ~str) -> ~str {
+            match c {
+                Some(' ') | Some('\t') =>
+                    clean_plain_text_after(content.pop_char(), content),
+                Some(c)                => { content.push_char(c); content }
+                _                      => content
+            }
+        }
+
+        fn clean_plain_text_before(c: Option<char>, mut content: ~str) -> ~str {
+            match c {
+                Some(' ') | Some('\t') =>
+                    clean_plain_text_before(content.shift_char(), content),
+                Some(c)                => { content.unshift_char(c); content }
+                _                      => content
+            }
+        }
+
+        
         let mut content = ~"";
         loop {
             match self.input.get() {
@@ -108,9 +127,9 @@ impl Lexer {
                 None        => { self.input.unget_eof(); break }
             }
         }
+
         // remove whitespace before the text
         content = clean_plain_text_before(content.shift_char(), content);
-
         // remove whitespace after the text
         content = clean_plain_text_after(content.pop_char(), content);
 
@@ -233,10 +252,20 @@ impl Lexer {
     }
 
     fn check_blankline(&mut self) {
+        fn get_blankline_begin(v: &Vec<Token>, i: uint) -> uint {
+            match v.get(i) {
+                &token::INDENT(_, _) => {
+                    if i == 0 { i } 
+                    else { get_blankline_begin(v, i - 1) }
+                },
+                _                   => i + 1
+            }
+        }
+
         let i = self.tokens.len() - 1;
-        if i == 0 { // only one token -> '\n'
+        if i == 0 { // only one token -> EOL
             self.tokens.pop();
-        } else {
+        } else { // line with only INDENT + EOL tokens
             match self.tokens.get(i - 1) {
                 &token::INDENT(_, _) => {
                     let pos = get_blankline_begin(&self.tokens, i - 1);
@@ -268,36 +297,3 @@ impl Lexer {
         }
     }
 }
-
-fn get_blankline_begin(v: &Vec<Token>, i: uint) -> uint {
-    match v.get(i) {
-        &token::INDENT(_, _) => {
-            if i == 0 {
-                i
-            } else {
-                get_blankline_begin(v, i - 1)
-            }
-        },
-        _                   => i + 1
-    }
-
-}
-
-fn clean_plain_text_after(c: Option<char>, mut content: ~str) -> ~str {
-    match c {
-        Some(' ') | Some('\t') => clean_plain_text_after(content.pop_char(),
-                                                       content),
-        Some(c)                => { content.push_char(c); content }
-        _                      => content
-    }
-}
-
-fn clean_plain_text_before(c: Option<char>, mut content: ~str) -> ~str {
-    match c {
-        Some(' ') | Some('\t') => clean_plain_text_before(content.shift_char(),
-                                                       content),
-        Some(c)                => { content.unshift_char(c); content }
-        _                      => content
-    }
-}
-
