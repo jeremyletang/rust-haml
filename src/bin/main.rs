@@ -64,8 +64,16 @@ fn print_usage() {
 fn main() {
     match get_reader() {
         Ok(reader)   => {
+            // parse haml
             let mut haml_engine = haml::Engine::new(reader, haml::Html5);
-            haml_engine.execute();
+            match haml_engine.execute() {
+                Ok(_)      => { /* nothing to do */ }
+                Err(e)  => { 
+                    println!("{} {}", "syntax error: ".b_red(), e); 
+                    return 
+                }
+            }
+            // generate and write html.
             let mut writer = io::stdout();
             match haml_engine.generate(&mut writer as &mut Writer) {
                 Ok(()) => { /* nothing to do */ },

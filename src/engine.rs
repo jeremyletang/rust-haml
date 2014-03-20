@@ -24,7 +24,7 @@
 
 use std::fmt;
 use std::io::Reader;
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::io::IoResult;
 
 use format::{HtmlFormat, Xhtml, Html5, Html4};
@@ -49,10 +49,13 @@ impl Engine {
         }
     }
 
-    pub fn execute(&mut self) {
+    pub fn execute(&mut self) -> Result<(), ~str> {
         let tokens = self.lexer.execute();
         println!("tokens:\n{}", tokens);
-        self.dom_tree = self.parser.execute(tokens);
+        match self.parser.execute(tokens) {
+            Ok(dt) => { self.dom_tree = dt; Ok(()) }
+            Err(e) => Err(e)
+        }
     }
 
     pub fn set_val<T: fmt::Show>(&mut self, val: T) -> bool {

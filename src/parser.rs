@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 
 use dom_tree::{DomTree, DomElement};
 use format::{HtmlFormat, Xhtml, Html5, Html4};
@@ -30,7 +30,10 @@ use token;
 pub struct Parser {
     priv html_fmt: HtmlFormat,
     priv tokens: Vec<Token>,
-    priv dom_tree: DomTree
+    priv dom_tree: DomTree,
+    priv current_line: int,
+    priv indent_length: u32,
+    priv indent_char: char
 }
 
 impl Parser {
@@ -38,14 +41,18 @@ impl Parser {
         Parser {
             html_fmt: html_fmt,
             tokens: Vec::new(),
-            dom_tree: DomTree::new()
+            dom_tree: DomTree::new(),
+            current_line: 1,
+            indent_length: 0,
+            indent_char: 0u8 as char
         }
     }
 
-    pub fn execute(&mut self, tokens: Vec<Token>) -> DomTree {
+    pub fn execute(&mut self, tokens: Vec<Token>) -> Result<DomTree, ~str> {
         self.tokens = tokens;
-        self.dom_tree.insert(DomElement::new(~"hello")).unwrap();
-        self.dom_tree.insert_inline(DomElement::new_inline(~"hello1", ~"blublublublub"));
-        self.dom_tree.clone()
+        Err(~"Error")
+        // self.dom_tree.insert(DomElement::new(~"hello")).unwrap();
+        // self.dom_tree.insert_inline(DomElement::new_inline(~"hello1", ~"blublublublub"));
+        // self.dom_tree.clone()
     }
 }

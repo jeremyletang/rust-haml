@@ -21,7 +21,7 @@
 // SOFTWARE.
 
 use std::io::Reader;
-use std::vec_ng::Vec;
+use std::vec::Vec;
 
 pub struct InputReader {
     priv input: ~Reader,

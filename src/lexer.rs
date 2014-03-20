@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 
 use input_reader::InputReader;
 use token::Token;
@@ -80,6 +80,8 @@ impl Lexer {
     fn handle_indent(&mut self) {
         while self.get_all(' ') ||
             self.get_all('\t') {}
+
+        // if is_blankline() { return Ok;}
     }
 
     fn handle_plain_text(&mut self) {
@@ -91,6 +93,10 @@ impl Lexer {
                 None        => { self.input.unget_eof(); break }
             }
         }
+        // remove whitespace before the text
+
+        // remove whitespace after the text
+
         if content.len() > 0 {
             self.tokens.push(token::PLAIN_TEXT(content));
         }

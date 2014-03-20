@@ -22,7 +22,7 @@
 
 extern crate collections;
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use collections::hashmap::HashMap;
 use std::fmt;
 
@@ -34,6 +34,7 @@ pub enum TagType {
     Block,
     Inline,
     Content,
+    Header,
     Root
 }
 
@@ -146,6 +147,17 @@ impl DomElement {
             tag: tag,
             content: ~"",
             tag_type: Block
+        }
+    }
+
+    pub fn new_header(header: ~str) -> DomElement {
+        DomElement {
+            parent: ElementId(vec!(0)),
+            childs: Vec::new(),
+            attributes: HashMap::new(),
+            tag: ~"",
+            content: header,
+            tag_type: Header
         }
     }
 
