@@ -56,8 +56,7 @@ impl Parser {
                     self.c_line += 1;
                     self.tokens.shift();
                 },
-                &token::INDENT(_, _) =>
-                    return Err(error::illegal_indent_at_begin(self.c_line)),
+                &token::INDENT(_, _) => return Err(error::illegal_indent_at_begin(self.c_line)),
                 _                    => return Ok(())
             }
         }
@@ -80,32 +79,29 @@ mod test {
     #[test]
     fn document_beginning_with_indent_is_invalid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::INDENT(' ', 2), token::TAG(~"tag"),
-                          token::EOL, token::EOF);
+        let tokens = vec!(token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL, token::EOF);
         assert_err!(parser.execute(tokens))
     }
 
     #[test]
     fn document_beginning_with_no_indent_is_valid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"),
-                          token::EOL, token::EOF);
+        let tokens = vec!(token::TAG(~"tag"), token::EOL, token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 
     #[test]
     fn document_beginning_with_eol_then_indent_is_invalid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::EOL, token::INDENT(' ', 2),
-                          token::TAG(~"tag"), token::EOL, token::EOF);
+        let tokens = vec!(token::EOL, token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
+                          token::EOF);
         assert_err!(parser.execute(tokens))
     }
 
     #[test]
     fn document_beginning_with_eol_then_no_indent_is_valid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::EOL, token::TAG(~"tag"),
-                          token::EOL, token::EOF);
+        let tokens = vec!(token::EOL, token::TAG(~"tag"), token::EOL, token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 

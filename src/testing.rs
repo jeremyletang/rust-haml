@@ -26,8 +26,7 @@
 macro_rules! assert_err(
     ($arg:expr) => (
         match $arg {
-            Ok(_)  => fail!("assertion failed: {:s} sould be Err",
-                            stringify!($arg)),
+            Ok(_)  => fail!("assertion failed: {:s} sould be Err", stringify!($arg)),
             Err(_) => {}
         }
     );
@@ -38,8 +37,7 @@ macro_rules! assert_ok(
     ($arg:expr) => (
         match $arg {
             Ok(_)  => {},
-            Err(_) => fail!("assertion failed: {:s} sould be Ok",
-                            stringify!($arg))
+            Err(_) => fail!("assertion failed: {:s} sould be Ok", stringify!($arg))
         }
     );
 )
@@ -48,8 +46,7 @@ macro_rules! assert_ok(
 macro_rules! assert_some(
     ($arg:expr) => (
         match $arg {
-            Some(_) => fail!("assertion failed: {:s} sould be None",
-                             stringify!($arg)),
+            Some(_) => fail!("assertion failed: {:s} sould be None", stringify!($arg)),
             None    => {}
         }
     );
@@ -60,8 +57,7 @@ macro_rules! assert_none(
     ($arg:expr) => (
         match $arg {
             Some(_) => {},
-            None    => fail!("assertion failed: {:s} sould be Some",
-                             stringify!($arg))
+            None    => fail!("assertion failed: {:s} sould be Some", stringify!($arg))
         }
     );
 )

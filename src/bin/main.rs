@@ -47,13 +47,11 @@ fn get_reader() -> Result<~Reader, ~str> {
     } else if a.len() == 2 {
         match File::open(&Path::new(a[1].clone())) {
             Ok(f)   => Ok(~f as ~Reader),
-            Err(_)  => Err(format!("{} {}, no such file or directory.",
-                                   "error:".b_red(),
-                                   a[1]))
+            Err(_)  => Err(format!("{} {}, no such file or directory.", "error:".b_red(), a[1]))
         }
     } else {
-        Err(format!("{} invalid arguments number: expected 1 but found {}.",
-                   "error:".b_red(), a.len()))
+        Err(format!("{} invalid arguments number: expected 1 but found {}.", "error:".b_red(),
+                    a.len()))
     }
 }
 
@@ -67,11 +65,8 @@ fn main() {
             // parse haml
             let mut haml_engine = haml::Engine::new(reader, haml::Html5);
             match haml_engine.execute() {
-                Ok(_)      => { /* nothing to do */ }
-                Err(e)  => { 
-                    println!("{}{}", "syntax error: ".b_red(), e); 
-                    return 
-                }
+                Ok(_)  => { /* nothing to do */ }
+                Err(e) => { println!("{}{}", "syntax error: ".b_red(), e); return }
             }
             // generate and write html.
             let mut writer = io::stdout();
@@ -80,9 +75,9 @@ fn main() {
                 Err(e) => fail!("error on writing output: {}", e)
             }
         }
-        Err(s)  => { 
+        Err(s)  => {
             println!("{}", s);
             print_usage();
         }
-    }   
+    }
 }

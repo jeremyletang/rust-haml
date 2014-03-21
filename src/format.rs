@@ -91,8 +91,7 @@ fn xml_prolog(spec_format: ~str) -> Option<~str> {
                 if split.len() == 1 {
                     Some(~"<?xml version='1.0' encoding='utf-8' ?>")
                 } else if split.len() == 2 {
-                    Some(format!("<?xml version='1.0' encoding='{}' ?>",
-                                 split[1]))
+                    Some(format!("<?xml version='1.0' encoding='{}' ?>", split[1]))
                 } else {
                     None
                 }
@@ -132,8 +131,8 @@ fn get_html5_specific(_: ~str) -> ~str {
 #[cfg(test)]
 mod test {
     use format::{get_specific_format, HtmlFormat, Xhtml, Html4, Html5, XHTML_5,
-                 XHTML_1_0_Transitional, XHTML_1_0_Frameset,
-                 HTML_4_01_Transitional, HTML_4_01_Frameset};
+                 XHTML_1_0_Transitional, XHTML_1_0_Frameset, HTML_4_01_Transitional,
+                 HTML_4_01_Frameset};
 
     #[test]
     fn html5_format_with_no_specific_give_html5() {
@@ -147,44 +146,37 @@ mod test {
 
     #[test]
     fn xhtml_format_with_no_specific_give_transitional() {
-        assert_eq!(XHTML_1_0_Transitional.to_owned(),
-                   get_specific_format(~"", Xhtml))
+        assert_eq!(XHTML_1_0_Transitional.to_owned(), get_specific_format(~"", Xhtml))
     }
 
     #[test]
     fn xhtml_format_with_unknown_specific_give_transitional() {
-        assert_eq!(XHTML_1_0_Transitional.to_owned(),
-                   get_specific_format(~"Somethingelse", Xhtml))
+        assert_eq!(XHTML_1_0_Transitional.to_owned(), get_specific_format(~"Somethingelse", Xhtml))
     }
 
     #[test]
     fn xhtml_format_with_a_specific_give_the_good_one() {
-        assert_eq!(XHTML_1_0_Frameset.to_owned(),
-                   get_specific_format(~"Frameset", Xhtml))
+        assert_eq!(XHTML_1_0_Frameset.to_owned(), get_specific_format(~"Frameset", Xhtml))
     }
 
     #[test]
     fn html4_format_with_no_specific_give_transitional() {
-        assert_eq!(HTML_4_01_Transitional.to_owned(),
-                   get_specific_format(~"", Html4))
+        assert_eq!(HTML_4_01_Transitional.to_owned(), get_specific_format(~"", Html4))
     }
 
     #[test]
     fn xhtml4_format_with_unknown_specific_give_transitional() {
-        assert_eq!(HTML_4_01_Transitional.to_owned(),
-                   get_specific_format(~"Somethingelse", Html4))
+        assert_eq!(HTML_4_01_Transitional.to_owned(), get_specific_format(~"Somethingelse", Html4))
     }
 
     #[test]
     fn xhtml4_format_with_a_specific_give_the_good_one() {
-        assert_eq!(HTML_4_01_Frameset.to_owned(),
-                   get_specific_format(~"Frameset", Html4))
+        assert_eq!(HTML_4_01_Frameset.to_owned(), get_specific_format(~"Frameset", Html4))
     }
 
     #[test]
     fn xml_specific_override_doctype_type() {
-        assert_eq!(~"<?xml version='1.0' encoding='utf-8' ?>",
-                   get_specific_format(~"XML", Html4))
+        assert_eq!(~"<?xml version='1.0' encoding='utf-8' ?>", get_specific_format(~"XML", Html4))
     }
 
     #[test]
@@ -196,8 +188,7 @@ mod test {
     #[test]
     fn xml_specific_with_too_much_params_give_default_for_format_type() {
         assert_eq!(HTML_4_01_Transitional.to_owned(),
-                   get_specific_format(~"XML iso-8859-1 some other params",
-                                       Html4))
+                   get_specific_format(~"XML iso-8859-1 some other params", Html4))
     }
 }
 

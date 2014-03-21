@@ -21,6 +21,5 @@
 // SOFTWARE.
 
 pub fn illegal_indent_at_begin(line: uint) -> ~str {
-    format!("line {}, indenting is forbidden at the beginning of \
-the document.", line)
+    format!("line {}, indenting is forbidden at the beginning of the document.", line)
 }
