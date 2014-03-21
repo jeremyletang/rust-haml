@@ -69,7 +69,7 @@ fn main() {
             match haml_engine.execute() {
                 Ok(_)      => { /* nothing to do */ }
                 Err(e)  => { 
-                    println!("{} {}", "syntax error: ".b_red(), e); 
+                    println!("{}{}", "syntax error: ".b_red(), e); 
                     return 
                 }
             }

@@ -252,10 +252,8 @@ impl Lexer {
             }
         }
 
-        let i = self.tokens.len() - 1;
-        if i == 0 { // only one token -> EOL
-            self.tokens.pop();
-        } else { // line with only INDENT + EOL tokens
+        let i = self.tokens.len();
+        if i != 0 {
             match self.tokens.get(i - 1) {
                 &token::INDENT(_, _) => {
                     let pos = get_blankline_begin(&self.tokens, i - 1);
@@ -279,8 +277,8 @@ impl Lexer {
         }
         match self.input.get() {
             Some(_) => {
-                self.tokens.push(token::EOL);
                 self.check_blankline();
+                self.tokens.push(token::EOL);
                 Ok
             },
             None    => { self.tokens.push(token::EOF); End }
@@ -431,9 +429,9 @@ mod tests {
     }
 
     #[test]
-    fn remove_blankline_no_content() {
+    fn remove_blankline_let_return() {
         let haml_str = ~"    \t     \n     \t    \n";
-        let expected = vec!(token::EOF);
+        let expected = vec!(token::EOL, token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
 
         assert_eq!(expected, lexer.execute())
@@ -442,7 +440,8 @@ mod tests {
     #[test]
     fn remove_blankline_with_content() {
         let haml_str = ~"    \t     \n%t\n     \t    \n";
-        let expected = vec!(token::TAG(~"t"), token::EOL, token::EOF);
+        let expected = vec!(token::EOL, token::TAG(~"t"), token::EOL,
+                            token::EOL, token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
 
         assert_eq!(expected, lexer.execute())
@@ -451,8 +450,9 @@ mod tests {
     #[test]
     fn remove_blankline_inside_content() {
         let haml_str = ~"    \t     \n%t\n     \t    \n%i\n";
-        let expected = vec!(token::TAG(~"t"), token::EOL,
-                            token::TAG(~"i"), token::EOL, token::EOF);
+        let expected = vec!(token::EOL, token::TAG(~"t"), token::EOL,
+                            token::EOL, token::TAG(~"i"), token::EOL,
+                            token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
 
         assert_eq!(expected, lexer.execute())
@@ -461,8 +461,9 @@ mod tests {
     #[test]
     fn remove_blankline_and_keep_indent() {
         let haml_str = ~"    \t     \n  %t\n     \t    \n";
-        let expected = vec!(token::INDENT(' ', 2), token::TAG(~"t"),
-                            token::EOL, token::EOF);
+        let expected = vec!(token::EOL, token::INDENT(' ', 2),
+                            token::TAG(~"t"), token::EOL, token::EOL, 
+                            token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
 
         assert_eq!(expected, lexer.execute())

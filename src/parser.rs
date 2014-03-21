@@ -26,12 +26,13 @@ use dom_tree::{DomTree, DomElement};
 use format::{HtmlFormat, Xhtml, Html5, Html4};
 use token::Token;
 use token;
+use error;
 
 pub struct Parser {
     priv html_fmt: HtmlFormat,
     priv tokens: Vec<Token>,
     priv dom_tree: DomTree,
-    priv current_line: int,
+    priv c_line: uint,
     priv indent_length: u32,
     priv indent_char: char
 }
@@ -42,17 +43,30 @@ impl Parser {
             html_fmt: html_fmt,
             tokens: Vec::new(),
             dom_tree: DomTree::new(),
-            current_line: 1,
+            c_line: 1,
             indent_length: 0,
             indent_char: 0u8 as char
         }
     }
 
+    fn check_indent_on_first_line(&mut self,) -> Result<(), ~str> {
+        loop {
+            match self.tokens.get(0) {
+                &token::EOL          => {
+                    self.c_line += 1;
+                    self.tokens.shift();
+                },
+                &token::INDENT(_, _) =>
+                    return Err(error::illegal_indent_at_begin(self.c_line)),
+                _                    => return Ok(())
+            }
+        }
+    }
+
     pub fn execute(&mut self, tokens: Vec<Token>) -> Result<DomTree, ~str> {
         self.tokens = tokens;
-        Err(~"Error")
-        // self.dom_tree.insert(DomElement::new(~"hello")).unwrap();
-        // self.dom_tree.insert_inline(DomElement::new_inline(~"hello1", ~"blublublublub"));
-        // self.dom_tree.clone()
+        try!(self.check_indent_on_first_line());
+
+        Ok(DomTree::new())
     }
 }
