@@ -27,13 +27,13 @@
 #[crate_type = "rlib"];
 
 // allow lints temporary
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(unused_imports)];
-#[warn(non_camel_case_types)];
+#![allow(missing_doc)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![warn(non_camel_case_types)]
 
-#[feature(macro_rules)];
-#[feature(globs)];
+#![feature(macro_rules)]
+#![feature(globs)]
 
 extern crate collections;
 
