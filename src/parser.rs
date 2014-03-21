@@ -86,7 +86,7 @@ mod test {
     }
 
     #[test]
-    fn document_beginning_no_indent_is_valid() {
+    fn document_beginning_with_no_indent_is_valid() {
         let mut parser = Parser::new(Html5);
         let tokens = vec!(token::TAG(~"tag"),
                           token::EOL, token::EOF);

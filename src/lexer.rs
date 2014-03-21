@@ -519,4 +519,81 @@ mod tests {
 
         assert_eq!(expected, lexer.execute())
     }
+
+    #[test]
+    fn lex_html_comment_with_no_new_line_give_plain_text() {
+        let haml_str = ~"/ %t hello world";
+        let expected = vec!(token::HTML_COMMENT,
+                            token::PLAIN_TEXT(~"%t hello world"),
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_html_comment_with_nested_tag_give_a_tag() {
+        let haml_str = ~"/ \n  %t hello world";
+        let expected = vec!(token::HTML_COMMENT, token::EOL, 
+                            token::INDENT(' ', 2), token::TAG(~"t"),
+                            token::PLAIN_TEXT(~"hello world"),
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_haml_comment_with_no_new_line_give_plain_text() {
+        let haml_str = ~"-# %t hello world";
+        let expected = vec!(token::HAML_COMMENT,
+                            token::PLAIN_TEXT(~"%t hello world"),
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_haml_comment_with_nested_tag_give_a_tag() {
+        let haml_str = ~"-# \n  %t hello world";
+        let expected = vec!(token::HAML_COMMENT, token::EOL, 
+                            token::INDENT(' ', 2), token::TAG(~"t"),
+                            token::PLAIN_TEXT(~"hello world"),
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_equal_on_new_lign_give_assign() {
+        let haml_str = ~"%t\n  =";
+        let expected = vec!(token::TAG(~"t"), token::EOL,
+                            token::INDENT(' ', 2), token::ASSIGN,
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_equal_stuck_top_tag_give_assign() {
+        let haml_str = ~"%t=";
+        let expected = vec!(token::TAG(~"t"), token::ASSIGN,
+                            token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn lex_equal_not_stuck_to_tag_is_plain_text() {
+        let haml_str = ~"%t =";
+        let expected = vec!(token::TAG(~"t"),
+                            token::PLAIN_TEXT(~"="), token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
 }
