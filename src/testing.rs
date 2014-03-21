@@ -20,32 +20,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
+#[macro_escape];
 
-// allow lints temporary
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(unused_imports)];
-#[warn(non_camel_case_types)];
+#[macro_export]
+macro_rules! assert_err(
+    ($arg:expr) => (
+        match $arg {
+            Ok(_)  => fail!("assertion failed: {:s} sould be Err",
+                            stringify!($arg)),
+            Err(_) => {}
+        }
+    );
+)
 
-#[feature(macro_rules)];
-#[feature(globs)];
+#[macro_export]
+macro_rules! assert_ok(
+    ($arg:expr) => (
+        match $arg {
+            Ok(_)  => {},
+            Err(_) => fail!("assertion failed: {:s} sould be Ok",
+                            stringify!($arg))
+        }
+    );
+)
 
-extern crate collections;
+#[macro_export]
+macro_rules! assert_some(
+    ($arg:expr) => (
+        match $arg {
+            Some(_) => fail!("assertion failed: {:s} sould be None",
+                             stringify!($arg)),
+            None    => {}
+        }
+    );
+)
 
-pub use format::{HtmlFormat, Xhtml, Html4, Html5};
-pub use engine::Engine;
-
-mod testing;
-mod format;
-mod engine;
-mod token;
-mod input_reader;
-mod lexer;
-mod dom_tree;
-mod parser;
-mod error;
+#[macro_export]
+macro_rules! assert_none(
+    ($arg:expr) => (
+        match $arg {
+            Some(_) => {},
+            None    => fail!("assertion failed: {:s} sould be Some",
+                             stringify!($arg))
+        }
+    );
+)

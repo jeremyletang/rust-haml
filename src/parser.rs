@@ -23,7 +23,7 @@
 use std::vec::Vec;
 
 use dom_tree::{DomTree, DomElement};
-use format::{HtmlFormat, Xhtml, Html5, Html4};
+use format::HtmlFormat;
 use token::Token;
 use token;
 use error;
@@ -69,4 +69,44 @@ impl Parser {
 
         Ok(DomTree::new())
     }
+}
+
+#[cfg(test)]
+mod test {
+    use token;
+    use format::Html5;
+    use parser::Parser;
+
+    #[test]
+    fn document_beginning_with_indent_is_invalid() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::INDENT(' ', 2), token::TAG(~"tag"),
+                          token::EOL, token::EOF);
+        assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn document_beginning_no_indent_is_valid() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::TAG(~"tag"),
+                          token::EOL, token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn document_beginning_with_eol_then_indent_is_invalid() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::EOL, token::INDENT(' ', 2),
+                          token::TAG(~"tag"), token::EOL, token::EOF);
+        assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn document_beginning_with_eol_then_no_indent_is_valid() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::EOL, token::TAG(~"tag"),
+                          token::EOL, token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
 }
