@@ -20,6 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub fn illegal_indent_at_begin(line: uint) -> ~str {
+pub fn illegal_indent_at_begin(line: u32) -> ~str {
     format!("line {}, indenting is forbidden at the beginning of the document.", line)
+}
+
+pub fn indent_using_line_and_space(line: u32) -> ~str {
+    format!("line {}, indentation can't use both tabs and spaces.", line)
+}
+
+pub fn indent_level_much_deeper(line: u32, deep_indent: u32) -> ~str {
+    format!("line {}, was indented {} levels deeper than the previous line.", line, deep_indent)
+}
+
+pub fn inconsistent_indent(line: u32, bad_c: char, c: char, bad_indent: u32, indent: u32) -> ~str {
+    let name = if c == ' ' { ~"spaces" } else { ~"tabs" };
+    let bad_name = if bad_c == ' ' { ~"spaces" } else { ~"tabs" };
+    format!("line {}, inconsistent indentation: {} {} used for indentation, \
+            but the rest of the document was indented using {} {}.",
+            line,
+            bad_indent,
+            bad_name,
+            indent,
+            name )
 }
