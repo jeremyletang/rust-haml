@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[allow(non_camel_case_types)];
+#![allow(non_camel_case_types)]
 
 #[deriving(Clone, Show, Eq)]
 pub enum Token {

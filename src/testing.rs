@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[macro_escape];
+#![macro_escape]
 
 #[macro_export]
 macro_rules! assert_err(

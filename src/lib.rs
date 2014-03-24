@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
+#![crate_id = "haml#0.0.1"]
+#![desc = "haml templating library for Rust"]
+#![license = "MIT"]
+#![crate_type = "dylib"]
+#![crate_type = "rlib"]
 
 // allow lints temporary
 #![allow(missing_doc)]
