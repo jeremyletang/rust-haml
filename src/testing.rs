@@ -61,3 +61,23 @@ macro_rules! assert_none(
         }
     );
 )
+
+#[macro_export]
+macro_rules! assert_true(
+    ($arg:expr) => (
+        match $arg {
+            true  => {},
+            false => fail!("assertion failed: {:s} sould be true", stringify!($arg))
+        }
+    );
+)
+
+#[macro_export]
+macro_rules! assert_false(
+    ($arg:expr) => (
+        match $arg {
+            true  => fail!("assertion failed: {:s} sould be false", stringify!($arg)),
+            false => {}
+        }
+    );
+)

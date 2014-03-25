@@ -51,7 +51,7 @@ impl Engine {
 
     pub fn execute(&mut self) -> Result<(), ~str> {
         let tokens = self.lexer.execute();
-        // println!("tokens:\n{}", tokens);
+        println!("tokens:\n{}", tokens);
         match self.parser.execute(tokens) {
             Ok(dt) => { self.dom_tree = dt; Ok(()) }
             Err(e) => Err(e)

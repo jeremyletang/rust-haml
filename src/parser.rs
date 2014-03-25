@@ -62,6 +62,22 @@ impl DCollector {
             tag_type: Unknown
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.tag == ~"" && self.attributes.is_empty() && self.content == ~""
+    }
+
+    pub fn is_inline(&self) -> bool {
+        (self.tag != ~"" || !self.attributes.is_empty()) && self.content != ~""
+    }
+
+    pub fn is_block(&self) -> bool {
+        (self.tag != ~"" || !self.attributes.is_empty()) && self.content == ~""
+    }
+
+    pub fn is_plaintext(&self) -> bool {
+        self.tag == ~"" && self.attributes.is_empty() && self.content != ~""
+    }
 }
 
 impl Parser {
@@ -177,9 +193,10 @@ impl Parser {
         match self.tokens.get(0) {
             &token::INDENT(_, l) => {
                 if data.content != ~"" {
-                    if l > self.indent_length && (data.tag != ~"" || !data.attributes.is_empty()) {
+                    if l > (self.indent_length * self.c_indent_lvl) && (data.tag != ~"" ||
+                       !data.attributes.is_empty()) {
                         Err(error::illegal_nesting(self.c_line, data.tag.to_owned()))
-                    } else if l > self.indent_length &&
+                    } else if l > (self.indent_length * self.c_indent_lvl) &&
                               (data.tag == ~"" && data.attributes.is_empty()) {
                         Err(error::illegal_plain_text_nesting(self.c_line))
                     } else {
@@ -204,25 +221,27 @@ impl Parser {
             }
             dom_tree.insert(item);
         }
-        let item = match data.tag_type {
-            Unknown => {
-                if data.tag == ~"" && data.attributes.is_empty() {
-                    // Just plain text
-                    Item::plain_text(data.content.clone())
-                } else if (data.tag != ~"" || !data.attributes.is_empty()) && data.content == ~"" {
-                    // Block
-                    Item::block(data.tag.clone(), data.attributes.clone())
-                } else {
-                    // Inline Block
-                    Item::inline(data.tag.clone(), data.attributes.clone(), data.content.clone())
-                }
-            },
-            HamlComment => {
-                Item::plain_text(~"")
-            },
-            HtmlComment => { Item::plain_text(~"") }
-        };
-        insert(item, &mut self.dom_tree, self.c_indent_lvl);
+        if !data.is_empty() {
+            let item = match data.tag_type {
+                Unknown => {
+                    if data.is_plaintext() {
+                        // Just plain text
+                        Item::plain_text(data.content.clone())
+                    } else if data.is_block() {
+                        // Block
+                        Item::block(data.tag.clone(), data.attributes.clone())
+                    } else {
+                        // Inline Block
+                        Item::inline(data.tag.clone(), data.attributes.clone(), data.content.clone())
+                    }
+                },
+                HamlComment => {
+                    Item::plain_text(~"")
+                },
+                HtmlComment => { Item::plain_text(~"") }
+            };
+            insert(item, &mut self.dom_tree, self.c_indent_lvl);
+        }
     }
 
     fn finalize_item_on_new_line(&mut self, data: DCollector) -> Result<(), ~str> {
@@ -232,8 +251,9 @@ impl Parser {
         self.insert_in_tree(data);
         // if no indent after a new line reset indent_lvl
         match self.tokens.get(0) {
-            &token::INDENT(_, _) => {},
-            _                    => self.c_indent_lvl = 0
+            &token::INDENT(_, _) => {}, // there is indent next so no reset
+            &token::EOL          => {}, // blanck line
+            _                    => self.c_indent_lvl = 0 // no indent in next line -> reset
         }
         Ok(())
     }
@@ -269,7 +289,7 @@ impl Parser {
 mod test {
     use token;
     use format::Html5;
-    use parser::Parser;
+    use parser::{Parser, DCollector};
 
     #[test]
     fn document_beginning_with_indent_is_invalid() {
@@ -480,5 +500,45 @@ mod test {
                           token::TAG(~"tag"), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn data_collector_is_empty() {
+        let data = DCollector::new();
+        assert_true!(data.is_empty())
+        assert_false!(data.is_inline())
+        assert_false!(data.is_block())
+        assert_false!(data.is_plaintext())
+    }
+
+    #[test]
+    fn data_collector_is_plaintext() {
+        let mut data = DCollector::new();
+        data.content = ~"some content";
+        assert_false!(data.is_empty())
+        assert_false!(data.is_inline())
+        assert_false!(data.is_block())
+        assert_true!(data.is_plaintext())
+    }
+
+    #[test]
+    fn data_collector_is_block() {
+        let mut data = DCollector::new();
+        data.tag = ~"some tag";
+        assert_false!(data.is_empty())
+        assert_false!(data.is_inline())
+        assert_true!(data.is_block())
+        assert_false!(data.is_plaintext())
+    }
+
+    #[test]
+    fn data_collector_is_inline() {
+        let mut data = DCollector::new();
+        data.tag = ~"some_tag";
+        data.content = ~"some content";
+        assert_false!(data.is_empty())
+        assert_true!(data.is_inline())
+        assert_false!(data.is_block())
+        assert_false!(data.is_plaintext())
     }
 }
