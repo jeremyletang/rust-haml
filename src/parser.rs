@@ -104,19 +104,56 @@ impl Parser {
                 try!(self.mix_space_tab_indent());
                 try!(self.inconsistent_indent(c, l));
                 try!(self.indent_level(l));
+                self.tokens.shift();
                 Ok(())
             },
             _                   => Ok(())
         }
     }
 
+    fn check_attributes(&mut self) -> Result<(), ~str> {
+        Ok(())
+    }
+
+    fn check_tag(&mut self) -> Result<(), ~str> {
+        fn invalid_id_class(name: &~str, line: u32) -> Result<(), ~str> {
+            if name.len() == 0 {
+                Err(error::illegal_element_class_id(line))
+            } else {
+                Ok(())
+            }
+        }
+        match self.tokens.get(0) {
+            &token::TAG(ref name)   => {
+                if name.len() != 0 {
+
+                } else {
+                    return Err(error::invalid_tag(self.c_line, ~"%"))
+                }
+            },
+            &token::ID(ref name)    => {
+                try!(invalid_id_class(name, self.c_line))
+            },
+            &token::CLASS(ref name) => {
+                try!(invalid_id_class(name, self.c_line))
+            },
+            _ => {}
+        }
+        self.check_attributes();
+        Ok(())
+    }
+
     pub fn execute(&mut self, tokens: Vec<Token>) -> Result<DomTree, ~str> {
         self.tokens = tokens;
         try!(self.check_indent_on_first_line());
         while self.tokens.get(0) != &token::EOF {
-            try!(self.check_indent());
-            if self.tokens.get(0) == &token::EOL {
-                self.c_line += 1;
+            match self.tokens.get(0) {
+                &token::INDENT(_, _) => try!(self.check_indent()),
+                &token::EOL          => self.c_line += 1,
+                &token::TAG(_)
+                | &token::ID(_)
+                | &token::CLASS(_)   => try!(self.check_tag()),
+                _                    => {}
             }
             self.tokens.shift();
         }
@@ -228,6 +265,54 @@ mod test {
         let tokens = vec!(token::TAG(~"tag"), token::EOL,
                           token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
                           token::INDENT(' ', 3), token::TAG(~"tag"), token::EOL,
+                          token::EOF);
+       assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn tag_can_have_alphanumeric_char_in_name() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::TAG(~"tag"), token::EOL,
+                          token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn tag_cannot_be_empty_or_have_invalid_char() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::TAG(~""), token::EOL,
+                          token::EOF);
+       assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn class_can_have_alphanumeric_name() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::CLASS(~"class"), token::EOL,
+                          token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn id_can_have_alphanumeric_name() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::CLASS(~"id"), token::EOL,
+                          token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn class_name_cannot_be_empty_or_have_invalid_char() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::CLASS(~""), token::EOL,
+                          token::EOF);
+       assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn id_name_cannot_be_empty_or_have_invalid_char() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::CLASS(~""), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }

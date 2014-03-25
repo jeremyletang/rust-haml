@@ -43,3 +43,11 @@ pub fn inconsistent_indent(line: u32, bad_c: char, c: char, bad_indent: u32, ind
             indent,
             name )
 }
+
+pub fn invalid_tag(line: u32, name: ~str) -> ~str {
+    format!("line {}, invalid tag name \"{}\"", line, name)
+}
+
+pub fn illegal_element_class_id(line: u32) -> ~str {
+    format!("line {}, illegal element: classes and ids must have values.", line)
+}
