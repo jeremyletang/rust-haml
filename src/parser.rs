@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 use std::vec::Vec;
+use collections::HashMap;
 
 use dom_tree::{DomTree, DomElement};
 use format::HtmlFormat;
@@ -36,6 +37,22 @@ pub struct Parser {
     priv indent_length: u32,
     priv indent_char: char,
     priv c_indent_lvl: u32
+}
+
+pub struct DCollector {
+    attributes: HashMap<~str, Vec<~str>>,
+    tag: ~str,
+    content: ~str,
+}
+
+impl DCollector {
+    pub fn new() -> DCollector {
+        DCollector {
+            attributes: HashMap::new(),
+            tag: ~"div",
+            content: ~""
+        }
+    }
 }
 
 impl Parser {
@@ -115,7 +132,7 @@ impl Parser {
         Ok(())
     }
 
-    fn check_tag(&mut self) -> Result<(), ~str> {
+    fn check_tag(&mut self, data: &mut DCollector) -> Result<(), ~str> {
         fn invalid_id_class(name: &~str, line: u32) -> Result<(), ~str> {
             if name.len() == 0 {
                 Err(error::illegal_element_class_id(line))
@@ -126,36 +143,66 @@ impl Parser {
         match self.tokens.get(0) {
             &token::TAG(ref name)   => {
                 if name.len() != 0 {
-
+                    data.tag = name.to_owned();
                 } else {
                     return Err(error::invalid_tag(self.c_line, ~"%"))
                 }
             },
             &token::ID(ref name)    => {
-                try!(invalid_id_class(name, self.c_line))
+                try!(invalid_id_class(name, self.c_line));
+                data.attributes.insert(~"id", vec!(name.to_owned()));
             },
             &token::CLASS(ref name) => {
-                try!(invalid_id_class(name, self.c_line))
+                try!(invalid_id_class(name, self.c_line));
+                data.attributes.insert_or_update_with(~"class", vec!(name.to_owned()), |_, v| {
+                    v.push(name.to_owned());
+                });
             },
             _ => {}
         }
-        self.check_attributes();
+        try!(self.check_attributes());
         Ok(())
+    }
+
+    pub fn check_illegal_nesting(&self, data: &DCollector) -> Result<(), ~str> {
+        match self.tokens.get(0) {
+            &token::INDENT(_, l) => {
+                if data.content != ~"" {
+                    if l > self.indent_length {
+                        Err(error::illegal_nesting(self.c_line, data.tag.to_owned()))
+                    } else {
+                        Ok(())
+                    }
+                } else {
+                    Ok(())
+                }
+            },
+            _                    => Ok(())
+        }
     }
 
     pub fn execute(&mut self, tokens: Vec<Token>) -> Result<DomTree, ~str> {
         self.tokens = tokens;
         try!(self.check_indent_on_first_line());
+        let mut data: DCollector = DCollector::new();
         while self.tokens.get(0) != &token::EOF {
-            match self.tokens.get(0) {
-                &token::INDENT(_, _) => try!(self.check_indent()),
-                &token::EOL          => self.c_line += 1,
-                &token::TAG(_)
-                | &token::ID(_)
-                | &token::CLASS(_)   => try!(self.check_tag()),
-                _                    => {}
+            match self.tokens.get(0).clone() {
+                token::INDENT(_, _)      => try!(self.check_indent()),
+                token::EOL               => {
+                    self.tokens.shift();
+                    try!(self.check_illegal_nesting(&data));
+                    self.c_line += 1;
+                    data = DCollector::new();
+                },
+                token::TAG(_)
+                | token::ID(_)
+                | token::CLASS(_)        => {
+                    try!(self.check_tag(&mut data));
+                    self.tokens.shift();
+                },
+                token::PLAIN_TEXT(ref s) => { data.content = s.clone(); self.tokens.shift(); },
+                _                        => { self.tokens.shift(); }
             }
-            self.tokens.shift();
         }
 
         Ok(DomTree::new())
@@ -315,5 +362,31 @@ mod test {
         let tokens = vec!(token::CLASS(~""), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn content_on_the_same_line_and_nested_is_illegal() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::TAG(~"tag"), token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::INDENT(' ', 2), token::TAG(~"tag2"), token::EOL, token::EOF);
+       assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn content_can_be_on_the_same_line_if_not_nested() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::TAG(~"tag"), token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::TAG(~"tag2"), token::EOL, token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn content_can_be_inline_inside_a_nested_tag() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::TAG(~"tag"), token::EOL,
+                          token::INDENT(' ', 2), token::TAG(~"tag2"),
+                          token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::TAG(~"tag"), token::EOL, token::EOF);
+       assert_ok!(parser.execute(tokens))
     }
 }

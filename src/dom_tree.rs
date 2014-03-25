@@ -23,7 +23,7 @@
 extern crate collections;
 
 use std::vec::Vec;
-use collections::hashmap::HashMap;
+use collections::HashMap;
 use std::fmt;
 
 #[deriving(Clone, Show, Eq, Ord)]

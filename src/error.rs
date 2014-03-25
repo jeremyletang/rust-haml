@@ -51,3 +51,8 @@ pub fn invalid_tag(line: u32, name: ~str) -> ~str {
 pub fn illegal_element_class_id(line: u32) -> ~str {
     format!("line {}, illegal element: classes and ids must have values.", line)
 }
+
+pub fn illegal_nesting(line: u32, tag_name: ~str) -> ~str {
+    format!("line {}, illegal nesting content can't be both given on the same line as \
+             %{} and nested within it.", line, tag_name)
+}
