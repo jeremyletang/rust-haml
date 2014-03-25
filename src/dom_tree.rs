@@ -226,18 +226,32 @@ impl Item {
     }
 }
 
+fn format_attribut(attributes: &HashMap<~str, Vec<~str>>) -> ~str {
+    let mut fmt = ~"";
+    for (at, values) in attributes.iter() {
+        fmt.push_str(format!(" {}=\'", at));
+        for v in values.iter() {
+            fmt.push_str(format!("{} ", v));
+        }
+        if values.len() > 0 { fmt.pop_char(); }
+        fmt.push_str("\'");
+    }
+    fmt
+}
+
 fn rec_show(elt: &Item,
             f: &mut fmt::Formatter,
             indent: ~str) -> fmt::Result {
     let mut res: fmt::Result = Ok(());
     for e in elt.get_childs().iter() {
         try!(write!(f.buf, "{}", indent));
+        let f_at = format_attribut(&e.attributes);
         match e.tag_type {
             PlainText => try!(write!(f.buf, "{}\n", e.content)),
-            Inline    => try!(write!(f.buf, "<{}>{}</{}>\n", e.tag, e.content, e.tag)),
+            Inline    => try!(write!(f.buf, "<{}{}>{}</{}>\n", e.tag, f_at, e.content, e.tag)),
             Block     => {
-                if e.get_childs().len() == 0 { try!(write!(f.buf, "<{}>", e.tag)); }
-                else { try!(write!(f.buf, "<{}>\n", e.tag)); }
+                if e.get_childs().len() == 0 { try!(write!(f.buf, "<{}{}>", e.tag, f_at)); }
+                else { try!(write!(f.buf, "<{}{}>\n", e.tag, f_at)); }
                 res = rec_show(e, f, indent + "  ");
                 if e.get_childs().len() == 0 { try!(write!(f.buf, "</{}>\n", e.tag)); }
                 else { try!(write!(f.buf, "{}</{}>\n", indent, e.tag)); }
