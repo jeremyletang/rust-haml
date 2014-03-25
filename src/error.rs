@@ -53,6 +53,10 @@ pub fn illegal_element_class_id(line: u32) -> ~str {
 }
 
 pub fn illegal_nesting(line: u32, tag_name: ~str) -> ~str {
-    format!("line {}, illegal nesting content can't be both given on the same line as \
+    format!("line {}, illegal nesting: content can't be both given on the same line as \
              %{} and nested within it.", line, tag_name)
+}
+
+pub fn illegal_plain_text_nesting(line: u32) -> ~str {
+    format!("line {}, illegal nesting: nesting within plain text is illegal", line)
 }

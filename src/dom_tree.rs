@@ -184,7 +184,7 @@ impl DomElement {
         }
     }
 
-    pub fn as_child(&self) -> bool {
+    pub fn had_child(&self) -> bool {
         self.childs.len() != 0
     }
 

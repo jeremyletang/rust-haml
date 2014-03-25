@@ -49,7 +49,7 @@ impl DCollector {
     pub fn new() -> DCollector {
         DCollector {
             attributes: HashMap::new(),
-            tag: ~"div",
+            tag: ~"",
             content: ~""
         }
     }
@@ -168,8 +168,10 @@ impl Parser {
         match self.tokens.get(0) {
             &token::INDENT(_, l) => {
                 if data.content != ~"" {
-                    if l > self.indent_length {
+                    if l > self.indent_length && (data.tag != ~"" || !data.attributes.is_empty()){
                         Err(error::illegal_nesting(self.c_line, data.tag.to_owned()))
+                    } else if l > self.indent_length && (data.tag == ~"" && data.attributes.is_empty()){
+                        Err(error::illegal_plain_text_nesting(self.c_line))
                     } else {
                         Ok(())
                     }
@@ -188,12 +190,6 @@ impl Parser {
         while self.tokens.get(0) != &token::EOF {
             match self.tokens.get(0).clone() {
                 token::INDENT(_, _)      => try!(self.check_indent()),
-                token::EOL               => {
-                    self.tokens.shift();
-                    try!(self.check_illegal_nesting(&data));
-                    self.c_line += 1;
-                    data = DCollector::new();
-                },
                 token::TAG(_)
                 | token::ID(_)
                 | token::CLASS(_)        => {
@@ -201,6 +197,12 @@ impl Parser {
                     self.tokens.shift();
                 },
                 token::PLAIN_TEXT(ref s) => { data.content = s.clone(); self.tokens.shift(); },
+                token::EOL               => {
+                    self.tokens.shift();
+                    try!(self.check_illegal_nesting(&data));
+                    self.c_line += 1;
+                    data = DCollector::new();
+                },
                 _                        => { self.tokens.shift(); }
             }
         }
@@ -387,6 +389,42 @@ mod test {
                           token::INDENT(' ', 2), token::TAG(~"tag2"),
                           token::PLAIN_TEXT(~"Hello world"), token::EOL,
                           token::TAG(~"tag"), token::EOL, token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn plain_text_cannot_be_nested_within_plain_text() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::INDENT(' ', 2), token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::EOF);
+       assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn div_cannot_be_nested_within_plain_text() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
+                          token::EOF);
+       assert_err!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn plain_text_can_be_followed_by_plain_text() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::EOF);
+       assert_ok!(parser.execute(tokens))
+    }
+
+    #[test]
+    fn plain_text_can_be_followed_by_div() {
+        let mut parser = Parser::new(Html5);
+        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
+                          token::TAG(~"tag"), token::EOL,
+                          token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 }
