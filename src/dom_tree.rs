@@ -35,6 +35,8 @@ pub enum TagType {
     Inline,
     PlainText,
     Header,
+    HamlComment,
+    HtmlComment,
     Root
 }
 
@@ -106,6 +108,11 @@ impl DomTree {
         tree_path.pop();
         self.cur_elt_id = ItemId(tree_path);
     }
+
+    pub fn get_current_lvl(&self) -> u32 {
+        let ItemId(tree_path) = self.cur_elt_id.clone();
+        (tree_path.len() - 1) as u32
+    }
 }
 
 fn rec_get_elt<'a>(elt: &'a Item,
@@ -139,12 +146,24 @@ impl Item {
         }
     }
 
-    pub fn block(tag: ~str) -> Item {
+    pub fn haml_comment() -> Item {
         Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
-            tag: tag,
+            tag: ~"",
+            content: ~"",
+            tag_type: HamlComment
+        }
+    }
+
+    pub fn block(tag: ~str,
+                 attributes: HashMap<~str, Vec<~str>>) -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
+            childs: Vec::new(),
+            attributes: attributes,
+            tag: if tag == ~"" { ~"div" } else { tag },
             content: ~"",
             tag_type: Block
         }
@@ -173,12 +192,13 @@ impl Item {
     }
 
     pub fn inline(tag: ~str,
+                  attributes: HashMap<~str, Vec<~str>>,
                   content: ~str) -> Item {
         Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
-            attributes: HashMap::new(),
-            tag: tag,
+            attributes: attributes,
+            tag: if tag == ~"" { ~"div" } else { tag },
             content: content,
             tag_type: Inline
         }
@@ -214,11 +234,16 @@ fn rec_show(elt: &Item,
         try!(write!(f.buf, "{}", indent));
         match e.tag_type {
             PlainText => try!(write!(f.buf, "{}\n", e.content)),
-            Inline   => try!(write!(f.buf, "[tag: {}] {}\n", e.tag, e.content)),
-            Block    => try!(write!(f.buf, "[tag: {}]\n", e.tag)),
-            _        => {}
+            Inline    => try!(write!(f.buf, "<{}>{}</{}>\n", e.tag, e.content, e.tag)),
+            Block     => {
+                if e.get_childs().len() == 0 { try!(write!(f.buf, "<{}>", e.tag)); }
+                else { try!(write!(f.buf, "<{}>\n", e.tag)); }
+                res = rec_show(e, f, indent + "  ");
+                if e.get_childs().len() == 0 { try!(write!(f.buf, "</{}>\n", e.tag)); }
+                else { try!(write!(f.buf, "{}</{}>\n", indent, e.tag)); }
+            },
+            _         => {}
         }
-        res = rec_show(e, f, indent + "  ");
     }
     res
 }

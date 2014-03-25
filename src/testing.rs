@@ -37,7 +37,7 @@ macro_rules! assert_ok(
     ($arg:expr) => (
         match $arg {
             Ok(_)  => {},
-            Err(_) => fail!("assertion failed: {:s} sould be Ok", stringify!($arg))
+            Err(e) => fail!("assertion failed: {:s} sould be Ok, err: {}", stringify!($arg), e)
         }
     );
 )

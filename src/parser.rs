@@ -29,6 +29,13 @@ use token::Token;
 use token;
 use error;
 
+#[deriving(Eq, Clone, Show)]
+pub enum TagType {
+    Unknown,
+    HamlComment,
+    HtmlComment,
+}
+
 pub struct Parser {
     priv html_fmt: HtmlFormat,
     priv tokens: Vec<Token>,
@@ -43,6 +50,7 @@ pub struct DCollector {
     attributes: HashMap<~str, Vec<~str>>,
     tag: ~str,
     content: ~str,
+    tag_type: TagType
 }
 
 impl DCollector {
@@ -50,7 +58,8 @@ impl DCollector {
         DCollector {
             attributes: HashMap::new(),
             tag: ~"",
-            content: ~""
+            content: ~"",
+            tag_type: Unknown
         }
     }
 }
@@ -164,7 +173,7 @@ impl Parser {
         Ok(())
     }
 
-    pub fn check_illegal_nesting(&self, data: &DCollector) -> Result<(), ~str> {
+    fn check_illegal_nesting(&self, data: &DCollector) -> Result<(), ~str> {
         match self.tokens.get(0) {
             &token::INDENT(_, l) => {
                 if data.content != ~"" {
@@ -184,6 +193,51 @@ impl Parser {
         }
     }
 
+    // pub fn consume_haml_comment(&mut self) {
+
+    // }
+
+    fn insert_in_tree(&mut self, data: DCollector) {
+        fn insert(item: Item, dom_tree: &mut DomTree, current_indent_lvl: u32) {
+            while current_indent_lvl < dom_tree.get_current_lvl() {
+                dom_tree.back();
+            }
+            dom_tree.insert(item);
+        }
+        let item = match data.tag_type {
+            Unknown => {
+                if data.tag == ~"" && data.attributes.is_empty() {
+                    // Just plain text
+                    Item::plain_text(data.content.clone())
+                } else if (data.tag != ~"" || !data.attributes.is_empty()) && data.content == ~"" {
+                    // Block
+                    Item::block(data.tag.clone(), data.attributes.clone())
+                } else {
+                    // Inline Block
+                    Item::inline(data.tag.clone(), data.attributes.clone(), data.content.clone())
+                }
+            },
+            HamlComment => {
+                Item::plain_text(~"")
+            },
+            HtmlComment => { Item::plain_text(~"") }
+        };
+        insert(item, &mut self.dom_tree, self.c_indent_lvl);
+    }
+
+    fn finalize_item_on_new_line(&mut self, data: DCollector) -> Result<(), ~str> {
+        self.tokens.shift();
+        try!(self.check_illegal_nesting(&data));
+        self.c_line += 1;
+        self.insert_in_tree(data);
+        // if no indent after a new line reset indent_lvl
+        match self.tokens.get(0) {
+            &token::INDENT(_, _) => {},
+            _                    => self.c_indent_lvl = 0
+        }
+        Ok(())
+    }
+
     pub fn execute(&mut self, tokens: Vec<Token>) -> Result<DomTree, ~str> {
         self.tokens = tokens;
         try!(self.check_indent_on_first_line());
@@ -199,16 +253,15 @@ impl Parser {
                 },
                 token::PLAIN_TEXT(ref s) => { data.content = s.clone(); self.tokens.shift(); },
                 token::EOL               => {
-                    self.tokens.shift();
-                    try!(self.check_illegal_nesting(&data));
-                    self.c_line += 1;
+                    try!(self.finalize_item_on_new_line(data));
                     data = DCollector::new();
                 },
+                // token::HAML_COMMENT      => { self.consume_haml_comment(); },
                 _                        => { self.tokens.shift(); }
             }
         }
 
-        Ok(DomTree::new())
+        Ok(self.dom_tree.clone())
     }
 }
 
