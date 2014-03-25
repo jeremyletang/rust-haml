@@ -23,7 +23,7 @@
 use std::vec::Vec;
 use collections::HashMap;
 
-use dom_tree::{DomTree, DomElement};
+use dom_tree::{DomTree, Item};
 use format::HtmlFormat;
 use token::Token;
 use token;
@@ -168,9 +168,10 @@ impl Parser {
         match self.tokens.get(0) {
             &token::INDENT(_, l) => {
                 if data.content != ~"" {
-                    if l > self.indent_length && (data.tag != ~"" || !data.attributes.is_empty()){
+                    if l > self.indent_length && (data.tag != ~"" || !data.attributes.is_empty()) {
                         Err(error::illegal_nesting(self.c_line, data.tag.to_owned()))
-                    } else if l > self.indent_length && (data.tag == ~"" && data.attributes.is_empty()){
+                    } else if l > self.indent_length &&
+                              (data.tag == ~"" && data.attributes.is_empty()) {
                         Err(error::illegal_plain_text_nesting(self.c_line))
                     } else {
                         Ok(())

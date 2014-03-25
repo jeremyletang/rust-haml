@@ -27,28 +27,28 @@ use collections::HashMap;
 use std::fmt;
 
 #[deriving(Clone, Show, Eq, Ord)]
-pub struct ElementId(Vec<i32>);
+pub struct ItemId(Vec<i32>);
 
 #[deriving(Clone, Show, Eq, Ord)]
 pub enum TagType {
     Block,
     Inline,
-    Content,
+    PlainText,
     Header,
     Root
 }
 
 #[deriving(Clone, Eq)]
 pub struct DomTree {
-    priv root: DomElement,
-    priv cur_elt_id: ElementId,
-    priv next_id: ElementId
+    priv root: Item,
+    priv cur_elt_id: ItemId,
+    priv next_id: ItemId
 }
 
 #[deriving(Clone, Eq, Show)]
-pub struct DomElement {
-    priv parent: ElementId,
-    priv childs: Vec<DomElement>,
+pub struct Item {
+    priv parent: ItemId,
+    priv childs: Vec<Item>,
     priv attributes: HashMap<~str, Vec<~str>>,
     priv tag: ~str,
     priv content: ~str,
@@ -58,66 +58,66 @@ pub struct DomElement {
 impl DomTree {
     pub fn new() -> DomTree {
         DomTree {
-            root: DomElement::root(),
-            cur_elt_id: ElementId(vec!(0)),
-            next_id: ElementId(vec!(0))
+            root: Item::root(),
+            cur_elt_id: ItemId(vec!(0)),
+            next_id: ItemId(vec!(0))
         }
     }
 
-    pub fn get_elt<'a>(&'a self, elt_id: ElementId) -> Option<&'a DomElement> {
-        let ElementId(mut tree_path) = elt_id.clone();
+    pub fn get_elt<'a>(&'a self, elt_id: ItemId) -> Option<&'a Item> {
+        let ItemId(mut tree_path) = elt_id.clone();
         match tree_path.shift() {
             Some(_) => rec_get_elt(&self.root, tree_path),
             None => None
         }
     }
 
-    pub fn set_current_elt(&mut self, id: ElementId) {
+    pub fn set_current_elt(&mut self, id: ItemId) {
         self.cur_elt_id = id
     }
 
-    pub fn get_current_elt(&self) -> ElementId {
+    pub fn get_current_elt(&self) -> ItemId {
         self.cur_elt_id.clone()
     }
 
-    pub fn insert(&mut self, mut elt: DomElement) -> Option<ElementId> {
-        let ElementId(mut n) = self.cur_elt_id.clone();
+    pub fn insert(&mut self, mut elt: Item) -> Option<ItemId> {
+        let ItemId(mut n) = self.cur_elt_id.clone();
         elt.parent = self.cur_elt_id.clone();
          match n.shift() {
             Some(_) => {
                 let tmp_pos = rec_insert_elt(&mut self.root, elt, n);
-                let ElementId(mut r) = self.cur_elt_id.clone();
+                let ItemId(mut r) = self.cur_elt_id.clone();
                 r.push(tmp_pos);
-                self.cur_elt_id = ElementId(r.clone());
-                Some(ElementId(r))
+                self.cur_elt_id = ItemId(r.clone());
+                Some(ItemId(r))
             },
             None => None
         }
     }
 
-    pub fn insert_inline(&mut self, elt: DomElement) -> Option<ElementId> {
+    pub fn insert_and_back(&mut self, elt: Item) -> Option<ItemId> {
         self.insert(elt);
         self.back();
         Some(self.cur_elt_id.clone())
     }
 
     pub fn back(&mut self) {
-        let ElementId(mut tree_path) = self.cur_elt_id.clone();
+        let ItemId(mut tree_path) = self.cur_elt_id.clone();
         tree_path.pop();
-        self.cur_elt_id = ElementId(tree_path);
+        self.cur_elt_id = ItemId(tree_path);
     }
 }
 
-fn rec_get_elt<'a>(elt: &'a DomElement,
-                   mut tree_path: Vec<i32>) -> Option<&'a DomElement> {
+fn rec_get_elt<'a>(elt: &'a Item,
+                   mut tree_path: Vec<i32>) -> Option<&'a Item> {
     match tree_path.shift() {
         Some(idx) => rec_get_elt(elt.get_childs().get(idx as uint), tree_path),
         None => Some(elt)
     }
 }
 
-fn rec_insert_elt(elt: &mut DomElement,
-                  new_elt: DomElement,
+fn rec_insert_elt(elt: &mut Item,
+                  new_elt: Item,
                   mut tree_path: Vec<i32>) -> i32 {
     match tree_path.shift() {
         Some(idx) => rec_insert_elt(elt.get_mut_childs().get_mut(idx as uint),
@@ -127,10 +127,10 @@ fn rec_insert_elt(elt: &mut DomElement,
     }
 }
 
-impl DomElement {
-    pub fn root() -> DomElement {
-        DomElement {
-            parent: ElementId(vec!(0)),
+impl Item {
+    pub fn root() -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
             tag: ~"",
@@ -139,9 +139,9 @@ impl DomElement {
         }
     }
 
-    pub fn new(tag: ~str) -> DomElement {
-        DomElement {
-            parent: ElementId(vec!(0)),
+    pub fn block(tag: ~str) -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
             tag: tag,
@@ -150,9 +150,9 @@ impl DomElement {
         }
     }
 
-    pub fn new_header(header: ~str) -> DomElement {
-        DomElement {
-            parent: ElementId(vec!(0)),
+    pub fn header(header: ~str) -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
             tag: ~"",
@@ -161,21 +161,21 @@ impl DomElement {
         }
     }
 
-    pub fn new_content(content: ~str) -> DomElement {
-        DomElement {
-            parent: ElementId(vec!(0)),
+    pub fn plain_text(text: ~str) -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
             tag: ~"",
-            content: content,
-            tag_type: Content
+            content: text,
+            tag_type: PlainText
         }
     }
 
-    pub fn new_inline(tag: ~str,
-                      content: ~str) -> DomElement {
-        DomElement {
-            parent: ElementId(vec!(0)),
+    pub fn inline(tag: ~str,
+                  content: ~str) -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
             tag: tag,
@@ -188,35 +188,35 @@ impl DomElement {
         self.childs.len() != 0
     }
 
-    pub fn get_childs<'a>(&'a self) -> &'a Vec<DomElement> {
+    pub fn get_childs<'a>(&'a self) -> &'a Vec<Item> {
         &self.childs
     }
 
-    pub fn get_mut_childs<'a>(&'a mut self) -> &'a mut Vec<DomElement> {
+    pub fn get_mut_childs<'a>(&'a mut self) -> &'a mut Vec<Item> {
         &mut self.childs
     }
 
-    pub fn get_parent_id(&self) -> ElementId {
+    pub fn get_parent_id(&self) -> ItemId {
         self.parent.clone()
     }
 
-    pub fn add_child(&mut self, elt: DomElement) -> i32 {
+    pub fn add_child(&mut self, elt: Item) -> i32 {
         self.childs.push(elt);
         (self.childs.len() - 1) as i32
     }
 }
 
-fn rec_show(elt: &DomElement,
+fn rec_show(elt: &Item,
             f: &mut fmt::Formatter,
             indent: ~str) -> fmt::Result {
     let mut res: fmt::Result = Ok(());
     for e in elt.get_childs().iter() {
         try!(write!(f.buf, "{}", indent));
         match e.tag_type {
-            Content => try!(write!(f.buf, "{}\n", e.content)),
-            Inline  => try!(write!(f.buf, "[tag: {}] {}\n", e.tag, e.content)),
-            Block   => try!(write!(f.buf, "[tag: {}]\n", e.tag)),
-            _       => {}
+            PlainText => try!(write!(f.buf, "{}\n", e.content)),
+            Inline   => try!(write!(f.buf, "[tag: {}] {}\n", e.tag, e.content)),
+            Block    => try!(write!(f.buf, "[tag: {}]\n", e.tag)),
+            _        => {}
         }
         res = rec_show(e, f, indent + "  ");
     }
