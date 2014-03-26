@@ -60,3 +60,7 @@ pub fn illegal_nesting(line: u32, tag_name: ~str) -> ~str {
 pub fn illegal_plain_text_nesting(line: u32) -> ~str {
     format!("line {}, illegal nesting: nesting within plain text is illegal", line)
 }
+
+pub fn no_content_on_empty_tag(line: u32) -> ~str {
+    format!("line {}, self-closing tags can\'t have content", line)
+}

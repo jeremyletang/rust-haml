@@ -29,6 +29,9 @@ use token::Token;
 use token;
 use error;
 
+static default_empty: [&'static str, ..10] = ["meta", "img", "link", "br", "hr", "input", "area",
+                                              "param", "col", "base"];
+
 #[deriving(Eq, Clone, Show)]
 pub enum TagType {
     Unknown,
@@ -158,7 +161,7 @@ impl Parser {
     }
 
     fn check_tag(&mut self, data: &mut DCollector) -> Result<(), ~str> {
-        fn invalid_id_class(name: &~str, line: u32) -> Result<(), ~str> {
+        fn is_id_or_class_valid(name: &~str, line: u32) -> Result<(), ~str> {
             if name.len() == 0 {
                 Err(error::illegal_element_class_id(line))
             } else {
@@ -174,11 +177,11 @@ impl Parser {
                 }
             },
             &token::ID(ref name)    => {
-                try!(invalid_id_class(name, self.c_line));
+                try!(is_id_or_class_valid(name, self.c_line));
                 data.attributes.insert(~"id", vec!(name.to_owned()));
             },
             &token::CLASS(ref name) => {
-                try!(invalid_id_class(name, self.c_line));
+                try!(is_id_or_class_valid(name, self.c_line));
                 data.attributes.insert_or_update_with(~"class", vec!(name.to_owned()), |_, v| {
                     v.push(name.to_owned());
                 });

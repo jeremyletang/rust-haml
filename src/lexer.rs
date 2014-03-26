@@ -258,6 +258,12 @@ impl Lexer {
 
     }
 
+    fn handle_empty_tag(&mut self) {
+        if self.next_is('/') {
+            self.tokens.push(token::CLOSING_EMPTY);
+        }
+    }
+
     fn lex_line(&mut self) -> LexResult {
         self.handle_indent();
         self.handle_escape_line();
@@ -265,6 +271,7 @@ impl Lexer {
         if !self.handle_comments() {
             self.handle_tag();
             // self.handle_attribute();
+            self.handle_empty_tag();
             self.handle_assign();
             self.handle_plain_text();
         }
@@ -526,7 +533,7 @@ mod tests {
     }
 
     #[test]
-    fn lex_equal_on_new_lign_give_assign() {
+    fn lex_equal_on_new_ligne_give_assign() {
         let haml_str = ~"%t\n  =";
         let expected = vec!(token::TAG(~"t"), token::EOL, token::INDENT(' ', 2), token::ASSIGN,
                             token::EOF);
@@ -548,6 +555,16 @@ mod tests {
     fn lex_equal_not_stuck_to_tag_is_plain_text() {
         let haml_str = ~"%t =";
         let expected = vec!(token::TAG(~"t"), token::PLAIN_TEXT(~"="), token::EOF);
+        let mut lexer = prepare_test_lexer(haml_str);
+
+        assert_eq!(expected, lexer.execute())
+    }
+
+    #[test]
+    fn find_slash_after_tag_create_empty_tag() {
+        let haml_str = ~"%t/ hello";
+        let expected = vec!(token::TAG(~"t"), token::CLOSING_EMPTY, token::PLAIN_TEXT(~"hello"),
+                            token::EOF);
         let mut lexer = prepare_test_lexer(haml_str);
 
         assert_eq!(expected, lexer.execute())

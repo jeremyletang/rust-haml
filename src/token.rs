@@ -46,6 +46,7 @@ pub enum Token {
     VAR,
     DOUBLE_DOT,
     NUMBER,
+    CLOSING_EMPTY,
     EOL,
     EOF
 }
