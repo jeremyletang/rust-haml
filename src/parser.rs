@@ -34,6 +34,8 @@ static default_empty: [&'static str, ..10] = ["meta", "img", "link", "br", "hr",
 
 #[deriving(Eq, Clone, Show)]
 pub enum TagType {
+    Tag,
+    Header,
     Unknown,
     HamlComment,
     HtmlComment,
@@ -54,6 +56,16 @@ pub struct DCollector {
     tag: ~str,
     content: ~str,
     tag_type: TagType
+}
+
+fn is_default_empty(tag: &str) -> bool {
+    default_empty.iter().fold(false, |b, &s| {
+        if s == tag {
+            true
+        } else {
+            b
+        }
+    })
 }
 
 impl DCollector {
@@ -200,7 +212,8 @@ impl Parser {
                        !data.attributes.is_empty()) {
                         Err(error::illegal_nesting(self.c_line, data.tag.to_owned()))
                     } else if l > (self.indent_length * self.c_indent_lvl) &&
-                              (data.tag == ~"" && data.attributes.is_empty()) {
+                              data.tag_type != HamlComment && data.is_plaintext() {
+                              // (data.tag == ~"" && data.attributes.is_empty()) {
                         Err(error::illegal_plain_text_nesting(self.c_line))
                     } else {
                         Ok(())
@@ -213,9 +226,16 @@ impl Parser {
         }
     }
 
-    // pub fn consume_haml_comment(&mut self) {
+    fn check_haml_comment(&mut self, data: &mut DCollector) {
+        data.tag_type = HamlComment;
+        data.content = ~"stuff";
+        self.tokens.shift();
+    }
 
-    // }
+    fn check_html_comment(&mut self, data: &mut DCollector) {
+        data.tag_type = HtmlComment;
+        self.tokens.shift();
+    }
 
     fn insert_in_tree(&mut self, data: DCollector) {
         fn insert(item: Item, dom_tree: &mut DomTree, current_indent_lvl: u32) {
@@ -224,27 +244,26 @@ impl Parser {
             }
             dom_tree.insert(item);
         }
-        if !data.is_empty() {
-            let item = match data.tag_type {
-                Unknown => {
-                    if data.is_plaintext() {
-                        // Just plain text
-                        Item::plain_text(data.content.clone())
-                    } else if data.is_block() {
-                        // Block
-                        Item::block(data.tag.clone(), data.attributes.clone())
-                    } else {
-                        // Inline Block
-                        Item::inline(data.tag.clone(), data.attributes.clone(), data.content.clone())
-                    }
-                },
-                HamlComment => {
-                    Item::plain_text(~"")
-                },
-                HtmlComment => { Item::plain_text(~"") }
-            };
-            insert(item, &mut self.dom_tree, self.c_indent_lvl);
-        }
+        let item = match data.tag_type {
+            Unknown => {
+                // Just plain text
+                if !data.is_empty() { Item::plain_text(data.content.clone()) }
+                else { return } // empty text
+            },
+            Tag        => {
+                if data.is_block() {
+                    // Block
+                    Item::block(data.tag.clone(), data.attributes.clone())
+                } else {
+                    // Inline Block
+                    Item::inline(data.tag.clone(), data.attributes.clone(), data.content.clone())
+                }
+            },
+            HamlComment => Item::haml_comment(),
+            HtmlComment => Item::html_comment(data.content.clone()),
+            Header      => { Item::plain_text(~"") }
+        };
+        insert(item, &mut self.dom_tree, self.c_indent_lvl);
     }
 
     fn finalize_item_on_new_line(&mut self, data: DCollector) -> Result<(), ~str> {
@@ -256,6 +275,7 @@ impl Parser {
         match self.tokens.get(0) {
             &token::INDENT(_, _) => {}, // there is indent next so no reset
             &token::EOL          => {}, // blanck line
+            &token::EOF          => {}, // end of file
             _                    => self.c_indent_lvl = 0 // no indent in next line -> reset
         }
         Ok(())
@@ -273,13 +293,15 @@ impl Parser {
                 | token::CLASS(_)        => {
                     try!(self.check_tag(&mut data));
                     self.tokens.shift();
+                    data.tag_type = Tag;
                 },
                 token::PLAIN_TEXT(ref s) => { data.content = s.clone(); self.tokens.shift(); },
                 token::EOL               => {
                     try!(self.finalize_item_on_new_line(data));
                     data = DCollector::new();
                 },
-                // token::HAML_COMMENT      => { self.consume_haml_comment(); },
+                token::HAML_COMMENT      => { self.check_haml_comment(&mut data); },
+                token::HTML_COMMENT      => { self.check_html_comment(&mut data); },
                 _                        => { self.tokens.shift(); }
             }
         }

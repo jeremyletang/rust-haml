@@ -157,6 +157,17 @@ impl Item {
         }
     }
 
+    pub fn html_comment(content: ~str) -> Item {
+        Item {
+            parent: ItemId(vec!(0)),
+            childs: Vec::new(),
+            attributes: HashMap::new(),
+            tag: ~"",
+            content: content,
+            tag_type: HtmlComment
+        }
+    }
+
     pub fn block(tag: ~str,
                  attributes: HashMap<~str, Vec<~str>>) -> Item {
         Item {
@@ -244,19 +255,30 @@ fn rec_show(elt: &Item,
             indent: ~str) -> fmt::Result {
     let mut res: fmt::Result = Ok(());
     for e in elt.get_childs().iter() {
-        try!(write!(f.buf, "{}", indent));
         let f_at = format_attribut(&e.attributes);
         match e.tag_type {
-            PlainText => try!(write!(f.buf, "{}\n", e.content)),
-            Inline    => try!(write!(f.buf, "<{}{}>{}</{}>\n", e.tag, f_at, e.content, e.tag)),
-            Block     => {
-                if e.get_childs().len() == 0 { try!(write!(f.buf, "<{}{}>", e.tag, f_at)); }
-                else { try!(write!(f.buf, "<{}{}>\n", e.tag, f_at)); }
+            PlainText   => try!(write!(f.buf, "{}{}\n", indent, e.content)),
+            Inline      => try!(write!(f.buf, "{}<{}{}>{}</{}>\n", indent,
+                                     e.tag, f_at, e.content, e.tag)),
+            Block       => {
+                if e.get_childs().len() == 0 {
+                    try!(write!(f.buf, "{}<{}{}>", indent, e.tag, f_at));
+                } else {
+                    try!(write!(f.buf, "{}<{}{}>\n", indent, e.tag, f_at));
+                }
                 res = rec_show(e, f, indent + "  ");
                 if e.get_childs().len() == 0 { try!(write!(f.buf, "</{}>\n", e.tag)); }
                 else { try!(write!(f.buf, "{}</{}>\n", indent, e.tag)); }
             },
-            _         => {}
+            HtmlComment => {
+                if e.get_childs().len() == 0 { try!(write!(f.buf, "{}<!-- ", indent)); }
+                else { try!(write!(f.buf, "{}<!--\n", indent)); }
+                if e.content != ~"" { try!(write!(f.buf, "{}", e.content)); }
+                else { res = rec_show(e, f, indent + "  "); }
+                if e.get_childs().len() == 0 { try!(write!(f.buf, " -->\n")); }
+                else { try!(write!(f.buf, "{}-->\n", indent)); }
+            }
+            _           => {}
         }
     }
     res
