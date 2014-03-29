@@ -20,15 +20,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[crate_id = "haml#0.0.1"];
-#[desc = "haml templating library for Rust"];
-#[license = "MIT"];
-#[crate_type = "bin"];
-#[allow(missing_doc)];
-#[allow(dead_code)];
-#[allow(deprecated_owned_vector)];
+#![crate_id = "haml#0.0.1"]
+#![desc = "haml templating library for Rust"]
+#![license = "MIT"]
+#![crate_type = "bin"]
+#![allow(missing_doc)]
+#![allow(dead_code)]
+#![allow(deprecated_owned_vector)]
 
-#[feature(globs)];
+#![feature(globs)]
 
 extern crate haml;
 extern crate colorize;
