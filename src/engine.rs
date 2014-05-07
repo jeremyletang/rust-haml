@@ -35,9 +35,9 @@ use dom_tree::DomTree;
 use input_reader::InputReader;
 
 pub struct Engine {
-    priv lexer: Lexer,
-    priv parser: Parser,
-    priv dom_tree: DomTree
+    lexer: Lexer,
+    parser: Parser,
+    dom_tree: DomTree
 }
 
 impl Engine {

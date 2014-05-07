@@ -89,7 +89,7 @@ fn xml_prolog(spec_format: ~str) -> Option<~str> {
         match split[0] {
             "XML"  => {
                 if split.len() == 1 {
-                    Some(~"<?xml version='1.0' encoding='utf-8' ?>")
+                    Some("<?xml version='1.0' encoding='utf-8' ?>".to_owned())
                 } else if split.len() == 2 {
                     Some(format!("<?xml version='1.0' encoding='{}' ?>", split[1]))
                 } else {

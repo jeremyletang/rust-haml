@@ -24,9 +24,9 @@ use std::io::Reader;
 use std::vec::Vec;
 
 pub struct InputReader {
-    priv input: ~Reader,
-    priv buffer: Vec<char>,
-    priv eof: bool
+    input: ~Reader,
+    buffer: Vec<char>,
+    eof: bool
 }
 
 impl InputReader {

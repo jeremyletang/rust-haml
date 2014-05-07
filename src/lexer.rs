@@ -27,8 +27,8 @@ use token::Token;
 use token;
 
 pub struct Lexer {
-    priv input: InputReader,
-    priv tokens: Vec<Token>
+    input: InputReader,
+    tokens: Vec<Token>
 }
 
 pub enum LexResult {
@@ -100,24 +100,32 @@ impl Lexer {
     }
 
     fn handle_plain_text(&mut self) {
-        fn clean_plain_text_after(c: Option<char>, mut content: ~str) -> ~str {
+        fn clean_plain_text_after(c: Option<u8>, mut content: StrBuf) -> StrBuf {
             match c {
-                Some(' ') | Some('\t') => clean_plain_text_after(content.pop_char(), content),
-                Some(c)                => { content.push_char(c); content }
+                Some(c) => {
+                    if c as char == ' ' || c as char == '\t' {
+                        clean_plain_text_after(unsafe {content.pop_byte() }, content)
+                    } else { content.push_char(c as char); content }
+                },
                 _                      => content
             }
         }
 
-        fn clean_plain_text_before(c: Option<char>, mut content: ~str) -> ~str {
+        fn clean_plain_text_before(c: Option<u8>, mut content: StrBuf) -> StrBuf {
             match c {
-                Some(' ') | Some('\t') => clean_plain_text_before(content.shift_char(), content),
-                Some(c)                => { content.unshift_char(c); content }
+                Some(c) => {
+                    if c as char == ' ' || c as char == '\t' {
+                        clean_plain_text_before(unsafe { content.shift_byte() }, content)
+                    } else {
+                        let mut tmp = StrBuf::from_char(1, c as char);
+                        tmp.push_str(content.into_owned()); tmp }
+                },
                 _                      => content
             }
         }
 
 
-        let mut content = ~"";
+        let mut content = StrBuf::new();
         loop {
             match self.input.get() {
                 Some('\n')  => { self.input.unget('\n'); break },
@@ -127,11 +135,11 @@ impl Lexer {
         }
 
         // remove whitespace before the text
-        content = clean_plain_text_before(content.shift_char(), content);
+        content = clean_plain_text_before(unsafe { content.shift_byte() }, content);
         // remove whitespace after the text
-        content = clean_plain_text_after(content.pop_char(), content);
+        content = clean_plain_text_after(unsafe { content.pop_byte() }, content);
 
-        if content.len() > 0 { self.tokens.push(token::PLAIN_TEXT(content));  }
+        if content.len() > 0 { self.tokens.push(token::PLAIN_TEXT(content.into_owned()));  }
     }
 
     fn handle_comments(&mut self) -> bool {
@@ -179,7 +187,7 @@ impl Lexer {
     }
 
     fn handle_identifier(&mut self) -> ~str{
-        let mut name = ~"";
+        let mut name = StrBuf::new();
         loop {
             match self.input.get() {
                 Some(c) => {
@@ -193,7 +201,7 @@ impl Lexer {
                 None    =>  { self.input.unget_eof(); break }
             }
         }
-        name
+        name.into_owned()
     }
 
     fn handle_tag(&mut self) {
@@ -296,7 +304,7 @@ mod tests {
         use std::io::{Reader, IoError, EndOfFile, IoResult};
 
         pub struct Input {
-            input: ~str
+            pub input: ~str
         }
 
         impl Reader for Input {

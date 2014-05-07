@@ -42,13 +42,13 @@ pub enum TagType {
 }
 
 pub struct Parser {
-    priv html_fmt: HtmlFormat,
-    priv tokens: Vec<Token>,
-    priv dom_tree: DomTree,
-    priv c_line: u32,
-    priv indent_length: u32,
-    priv indent_char: char,
-    priv c_indent_lvl: u32
+    html_fmt: HtmlFormat,
+    tokens: Vec<Token>,
+    dom_tree: DomTree,
+    c_line: u32,
+    indent_length: u32,
+    indent_char: char,
+    c_indent_lvl: u32
 }
 
 pub struct DCollector {
@@ -72,26 +72,26 @@ impl DCollector {
     pub fn new() -> DCollector {
         DCollector {
             attributes: HashMap::new(),
-            tag: ~"",
-            content: ~"",
+            tag: "".to_owned(),
+            content: "".to_owned(),
             tag_type: Unknown
         }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.tag == ~"" && self.attributes.is_empty() && self.content == ~""
+        self.tag == "".to_owned() && self.attributes.is_empty() && self.content == "".to_owned()
     }
 
     pub fn is_inline(&self) -> bool {
-        (self.tag != ~"" || !self.attributes.is_empty()) && self.content != ~""
+        (self.tag != "".to_owned() || !self.attributes.is_empty()) && self.content != "".to_owned()
     }
 
     pub fn is_block(&self) -> bool {
-        (self.tag != ~"" || !self.attributes.is_empty()) && self.content == ~""
+        (self.tag != "".to_owned() || !self.attributes.is_empty()) && self.content == "".to_owned()
     }
 
     pub fn is_plaintext(&self) -> bool {
-        self.tag == ~"" && self.attributes.is_empty() && self.content != ~""
+        self.tag == "".to_owned() && self.attributes.is_empty() && self.content != "".to_owned()
     }
 }
 
@@ -185,16 +185,16 @@ impl Parser {
                 if name.len() != 0 {
                     data.tag = name.to_owned();
                 } else {
-                    return Err(error::invalid_tag(self.c_line, ~"%"))
+                    return Err(error::invalid_tag(self.c_line, "%".to_owned()))
                 }
             },
             &token::ID(ref name)    => {
                 try!(is_id_or_class_valid(name, self.c_line));
-                data.attributes.insert(~"id", vec!(name.to_owned()));
+                data.attributes.insert("id".to_owned(), vec!(name.to_owned()));
             },
             &token::CLASS(ref name) => {
                 try!(is_id_or_class_valid(name, self.c_line));
-                data.attributes.insert_or_update_with(~"class", vec!(name.to_owned()), |_, v| {
+                data.attributes.insert_or_update_with("class".to_owned(), vec!(name.to_owned()), |_, v| {
                     v.push(name.to_owned());
                 });
             },
@@ -207,8 +207,8 @@ impl Parser {
     fn check_illegal_nesting(&self, data: &DCollector) -> Result<(), ~str> {
         match self.tokens.get(0) {
             &token::INDENT(_, l) => {
-                if data.content != ~"" {
-                    if l > (self.indent_length * self.c_indent_lvl) && (data.tag != ~"" ||
+                if data.content != "".to_owned() {
+                    if l > (self.indent_length * self.c_indent_lvl) && (data.tag != "".to_owned() ||
                        !data.attributes.is_empty()) {
                         Err(error::illegal_nesting(self.c_line, data.tag.to_owned()))
                     } else if l > (self.indent_length * self.c_indent_lvl) &&
@@ -228,7 +228,7 @@ impl Parser {
 
     fn check_haml_comment(&mut self, data: &mut DCollector) {
         data.tag_type = HamlComment;
-        data.content = ~"stuff";
+        data.content = "stuff".to_owned();
         self.tokens.shift();
     }
 
@@ -261,7 +261,7 @@ impl Parser {
             },
             HamlComment => Item::haml_comment(),
             HtmlComment => Item::html_comment(data.content.clone()),
-            Header      => { Item::plain_text(~"") }
+            Header      => { Item::plain_text("".to_owned()) }
         };
         insert(item, &mut self.dom_tree, self.c_indent_lvl);
     }
@@ -319,21 +319,21 @@ mod test {
     #[test]
     fn document_beginning_with_indent_is_invalid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL, token::EOF);
+        let tokens = vec!(token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL, token::EOF);
         assert_err!(parser.execute(tokens))
     }
 
     #[test]
     fn document_beginning_with_no_indent_is_valid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL, token::EOF);
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL, token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 
     #[test]
     fn document_beginning_with_eol_then_indent_is_invalid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::EOL, token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::EOL, token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
         assert_err!(parser.execute(tokens))
     }
@@ -341,14 +341,14 @@ mod test {
     #[test]
     fn document_beginning_with_eol_then_no_indent_is_valid() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::EOL, token::TAG(~"tag"), token::EOL, token::EOF);
+        let tokens = vec!(token::EOL, token::TAG("tag".to_owned()), token::EOL, token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 
     #[test]
     fn cannot_indent_using_space_and_tabs_in_the_same_line() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
                           token::INDENT(' ', 2), token::INDENT('\t', 2), token::EOL, token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -356,10 +356,10 @@ mod test {
     #[test]
     fn can_indent_document() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 4), token::TAG(~"tag"), token::EOL,
-                          token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 4), token::TAG("tag".to_owned()), token::EOL,
+                          token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -367,9 +367,9 @@ mod test {
     #[test]
     fn can_indent_using_space_and_tabs_in_different_lines() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT('\t', 4), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT('\t', 4), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -377,11 +377,11 @@ mod test {
     #[test]
     fn can_indent_in_the_same_lvl() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -389,9 +389,9 @@ mod test {
     #[test]
     fn cannot_omit_a_lvl() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 6), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 6), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -399,10 +399,10 @@ mod test {
     #[test]
     fn each_indent_have_the_same_base_length() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 4), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 6), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 4), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 6), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -410,9 +410,9 @@ mod test {
     #[test]
     fn indent_cannot_have_different_base_length() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 3), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 3), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -420,7 +420,7 @@ mod test {
     #[test]
     fn tag_can_have_alphanumeric_char_in_name() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -428,7 +428,7 @@ mod test {
     #[test]
     fn tag_cannot_be_empty_or_have_invalid_char() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~""), token::EOL,
+        let tokens = vec!(token::TAG("".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -436,7 +436,7 @@ mod test {
     #[test]
     fn class_can_have_alphanumeric_name() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::CLASS(~"class"), token::EOL,
+        let tokens = vec!(token::CLASS("class".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -444,7 +444,7 @@ mod test {
     #[test]
     fn id_can_have_alphanumeric_name() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::CLASS(~"id"), token::EOL,
+        let tokens = vec!(token::CLASS("id".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -452,7 +452,7 @@ mod test {
     #[test]
     fn class_name_cannot_be_empty_or_have_invalid_char() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::CLASS(~""), token::EOL,
+        let tokens = vec!(token::CLASS("".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -460,7 +460,7 @@ mod test {
     #[test]
     fn id_name_cannot_be_empty_or_have_invalid_char() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::CLASS(~""), token::EOL,
+        let tokens = vec!(token::CLASS("".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -468,34 +468,34 @@ mod test {
     #[test]
     fn content_on_the_same_line_and_nested_is_illegal() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag2"), token::EOL, token::EOF);
+        let tokens = vec!(token::TAG("tag".to_owned()), token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag2".to_owned()), token::EOL, token::EOF);
        assert_err!(parser.execute(tokens))
     }
 
     #[test]
     fn content_can_be_on_the_same_line_if_not_nested() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::TAG(~"tag2"), token::EOL, token::EOF);
+        let tokens = vec!(token::TAG("tag".to_owned()), token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::TAG("tag2".to_owned()), token::EOL, token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 
     #[test]
     fn content_can_be_inline_inside_a_nested_tag() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::TAG(~"tag"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag2"),
-                          token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::TAG(~"tag"), token::EOL, token::EOF);
+        let tokens = vec!(token::TAG("tag".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag2".to_owned()),
+                          token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::TAG("tag".to_owned()), token::EOL, token::EOF);
        assert_ok!(parser.execute(tokens))
     }
 
     #[test]
     fn plain_text_cannot_be_nested_within_plain_text() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::INDENT(' ', 2), token::PLAIN_TEXT(~"Hello world"), token::EOL,
+        let tokens = vec!(token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -503,8 +503,8 @@ mod test {
     #[test]
     fn div_cannot_be_nested_within_plain_text() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::INDENT(' ', 2), token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::INDENT(' ', 2), token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_err!(parser.execute(tokens))
     }
@@ -512,8 +512,8 @@ mod test {
     #[test]
     fn plain_text_can_be_followed_by_plain_text() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::PLAIN_TEXT(~"Hello world"), token::EOL,
+        let tokens = vec!(token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -521,8 +521,8 @@ mod test {
     #[test]
     fn plain_text_can_be_followed_by_div() {
         let mut parser = Parser::new(Html5);
-        let tokens = vec!(token::PLAIN_TEXT(~"Hello world"), token::EOL,
-                          token::TAG(~"tag"), token::EOL,
+        let tokens = vec!(token::PLAIN_TEXT("Hello world".to_owned()), token::EOL,
+                          token::TAG("tag".to_owned()), token::EOL,
                           token::EOF);
        assert_ok!(parser.execute(tokens))
     }
@@ -539,7 +539,7 @@ mod test {
     #[test]
     fn data_collector_is_plaintext() {
         let mut data = DCollector::new();
-        data.content = ~"some content";
+        data.content = "some content".to_owned();
         assert_false!(data.is_empty())
         assert_false!(data.is_inline())
         assert_false!(data.is_block())
@@ -549,7 +549,7 @@ mod test {
     #[test]
     fn data_collector_is_block() {
         let mut data = DCollector::new();
-        data.tag = ~"some tag";
+        data.tag = "some tag".to_owned();
         assert_false!(data.is_empty())
         assert_false!(data.is_inline())
         assert_true!(data.is_block())
@@ -559,8 +559,8 @@ mod test {
     #[test]
     fn data_collector_is_inline() {
         let mut data = DCollector::new();
-        data.tag = ~"some_tag";
-        data.content = ~"some content";
+        data.tag = "some_tag".to_owned();
+        data.content = "some content".to_owned();
         assert_false!(data.is_empty())
         assert_true!(data.is_inline())
         assert_false!(data.is_block())

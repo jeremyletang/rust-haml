@@ -42,19 +42,19 @@ pub enum TagType {
 
 #[deriving(Clone, Eq)]
 pub struct DomTree {
-    priv root: Item,
-    priv cur_elt_id: ItemId,
-    priv next_id: ItemId
+    root: Item,
+    cur_elt_id: ItemId,
+    next_id: ItemId
 }
 
 #[deriving(Clone, Eq, Show)]
 pub struct Item {
-    priv parent: ItemId,
-    priv childs: Vec<Item>,
-    priv attributes: HashMap<~str, Vec<~str>>,
-    priv tag: ~str,
-    priv content: ~str,
-    priv tag_type: TagType
+    parent: ItemId,
+    childs: Vec<Item>,
+    attributes: HashMap<~str, Vec<~str>>,
+    tag: ~str,
+    content: ~str,
+    tag_type: TagType
 }
 
 impl DomTree {
@@ -140,8 +140,8 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
-            tag: ~"",
-            content: ~"",
+            tag: "".to_owned(),
+            content: "".to_owned(),
             tag_type: Root
         }
     }
@@ -151,8 +151,8 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
-            tag: ~"",
-            content: ~"",
+            tag: "".to_owned(),
+            content: "".to_owned(),
             tag_type: HamlComment
         }
     }
@@ -162,7 +162,7 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
-            tag: ~"",
+            tag: "".to_owned(),
             content: content,
             tag_type: HtmlComment
         }
@@ -174,8 +174,8 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: attributes,
-            tag: if tag == ~"" { ~"div" } else { tag },
-            content: ~"",
+            tag: if tag == "".to_owned() { "div".to_owned() } else { tag },
+            content: "".to_owned(),
             tag_type: Block
         }
     }
@@ -185,7 +185,7 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
-            tag: ~"",
+            tag: "".to_owned(),
             content: header,
             tag_type: Header
         }
@@ -196,7 +196,7 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: HashMap::new(),
-            tag: ~"",
+            tag: "".to_owned(),
             content: text,
             tag_type: PlainText
         }
@@ -209,7 +209,7 @@ impl Item {
             parent: ItemId(vec!(0)),
             childs: Vec::new(),
             attributes: attributes,
-            tag: if tag == ~"" { ~"div" } else { tag },
+            tag: if tag == "".to_owned() { "div".to_owned() } else { tag },
             content: content,
             tag_type: Inline
         }
@@ -238,16 +238,16 @@ impl Item {
 }
 
 fn format_attribut(attributes: &HashMap<~str, Vec<~str>>) -> ~str {
-    let mut fmt = ~"";
+    let mut fmt = StrBuf::new();
     for (at, values) in attributes.iter() {
         fmt.push_str(format!(" {}=\'", at));
         for v in values.iter() {
             fmt.push_str(format!("{} ", v));
         }
-        if values.len() > 0 { fmt.pop_char(); }
+        if values.len() > 0 { unsafe { fmt.pop_byte(); } }
         fmt.push_str("\'");
     }
-    fmt
+    fmt.into_owned()
 }
 
 fn rec_show(elt: &Item,
@@ -273,7 +273,7 @@ fn rec_show(elt: &Item,
             HtmlComment => {
                 if e.get_childs().len() == 0 { try!(write!(f.buf, "{}<!-- ", indent)); }
                 else { try!(write!(f.buf, "{}<!--\n", indent)); }
-                if e.content != ~"" { try!(write!(f.buf, "{}", e.content)); }
+                if e.content != "".to_owned() { try!(write!(f.buf, "{}", e.content)); }
                 else { res = rec_show(e, f, indent + "  "); }
                 if e.get_childs().len() == 0 { try!(write!(f.buf, " -->\n")); }
                 else { try!(write!(f.buf, "{}-->\n", indent)); }
@@ -286,6 +286,6 @@ fn rec_show(elt: &Item,
 
 impl fmt::Show for DomTree {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        rec_show(&self.root, f, ~"")
+        rec_show(&self.root, f, "".to_owned())
     }
 }

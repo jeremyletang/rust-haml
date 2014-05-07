@@ -33,8 +33,8 @@ pub fn indent_level_much_deeper(line: u32, deep_indent: u32) -> ~str {
 }
 
 pub fn inconsistent_indent(line: u32, bad_c: char, c: char, bad_indent: u32, indent: u32) -> ~str {
-    let name = if c == ' ' { ~"spaces" } else { ~"tabs" };
-    let bad_name = if bad_c == ' ' { ~"spaces" } else { ~"tabs" };
+    let name = if c == ' ' { "spaces" } else { "tabs" };
+    let bad_name = if bad_c == ' ' { "spaces" } else { "tabs" };
     format!("line {}, inconsistent indentation: {} {} used for indentation, \
             but the rest of the document was indented using {} {}.",
             line,
